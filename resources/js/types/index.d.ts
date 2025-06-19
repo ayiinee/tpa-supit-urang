@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
+import { PageProps as InertiaPageProps } from '@inertiajs/core';
 
 export interface Auth {
     user: User;
@@ -40,4 +41,48 @@ export interface User {
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
+}
+
+export interface Timbangan {
+  no_tiket: string;
+  tanggal: string;
+  no_polisi: string;
+  nama_supir: string;
+  berat_masuk: number;
+  berat_keluar?: number | null;
+  netto?: number | null;
+  sampah?: {
+    jenis_sampah: string;
+    id: number;
+  };
+  truk?: {
+    no_polisi: string;
+  };
+}
+
+export interface Truck {
+    no_polisi: string;
+    nama_supir: string;
+    kode_supplier?: { nama_supplier: string };
+    golongan?: string;
+    barang?: { jenis_sampah: string };
+};
+
+export interface Sampah {
+    id: number;
+    jenis_sampah: string;
+};
+
+export interface Supplier {
+    kode_supplier: string;
+    nama_supplier: string;
+    alamat: string;
+};
+
+export interface PageProps extends InertiaPageProps {
+    timbangans: Timbangan[];
+    newTicketNumber: string;
+    trucks: Truck[];
+    sampahs: Sampah[];
+    suppliers: Supplier[];
 }

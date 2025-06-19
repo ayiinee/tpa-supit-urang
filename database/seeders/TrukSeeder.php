@@ -15,7 +15,7 @@ class TrukSeeder extends Seeder
                 'golongan' => 'Truk Kecil',
                 'kode_supplier' => 'SUP001',
                 'barang' => 'Organik',
-                'supir' => 'Pak Darman',
+                'nama_supir' => 'Pak Darman',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('golongan');
             $table->string('kode_supplier', 20);
             $table->string('barang');
-            $table->string('supir');
+            $table->string('nama_supir');
             $table->timestamps();
             $table->foreign('kode_supplier')->references('kode_supplier')->on('supplier')->onDelete('cascade');
         });
