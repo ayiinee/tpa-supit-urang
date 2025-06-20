@@ -13,30 +13,8 @@ class TrukController extends Controller
 {
     public function index()
     {
-        $trucks = Truk::with(['supplier', 'sampah'])->orderBy('id', 'desc')->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'no_polisi' => $item->no_polisi,
-                    'kode_supplier' => $item->supplier ? [
-                        'nama_supplier' => $item->supplier->nama_supplier,
-                    ] : null,
-                    'barang' => $item->sampah ? [
-                        'jenis_sampah' => $item->sampah->jenis_sampah,
-                    ] : null,
-                    'nama_supir' => $item->nama_supir,
-                ];
-            });
+    return Inertia::render('Truk', $this->getTrukData());
 
-
-        $suppliers = Supplier::select('kode_supplier', 'nama_supplier')->get();
-        $sampahs = Sampah::select('id', 'jenis_sampah')->get();
-
-        return Inertia::render('Truk', [
-            'trucks' => $trucks,
-            'suppliers' => $suppliers,
-            'sampahs' => $sampahs,
-        ]);
     }
 
     public function store(Request $request)
@@ -79,4 +57,36 @@ class TrukController extends Controller
 
         return redirect()->route('truk')->with('success', 'Truk deleted successfully.');
     }
+
+    public function fetchAll()
+    {
+            return response()->json($this->getTrukData());
+
+    }
+    private function getTrukData()
+{
+    $trucks = Truk::with(['supplier', 'sampah'])->orderBy('id', 'desc')->get()
+        ->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'no_polisi' => $item->no_polisi,
+                'nama_supir' => $item->nama_supir,
+                'kode_supplier' => [
+                    'kode_supplier' => $item->supplier->kode_supplier ?? null,
+                    'nama_supplier' => $item->supplier->nama_supplier ?? null,
+                ],
+                'barang' => [
+                    'id' => $item->sampah->id ?? null,
+                    'jenis_sampah' => $item->sampah->jenis_sampah ?? null,
+                ],
+            ];
+        });
+
+    $suppliers = Supplier::select('kode_supplier', 'nama_supplier')->get();
+    $sampahs = Sampah::select('id', 'jenis_sampah')->get();
+
+    return compact('trucks', 'suppliers', 'sampahs');
 }
+
+}
+

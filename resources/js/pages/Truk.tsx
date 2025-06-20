@@ -4,9 +4,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, PageProps } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { type BreadcrumbItem, Sampah, Supplier, Truck } from '@/types';
+import { Head, router, useForm } from '@inertiajs/react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -16,8 +17,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Truk() {
-    const { trucks, suppliers, sampahs } = usePage<PageProps>().props;
+    // const { trucks, suppliers, sampahs } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
+    const [trucks, setTrucks] = useState<Truck[]>([]);
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+    const [sampahs, setSampahs] = useState<Sampah[]>([]);
+
+    useEffect(() => {
+        axios.get('/api/truk-data').then((res) => {
+            setTrucks(res.data.trucks);
+            setSuppliers(res.data.suppliers);
+            setSampahs(res.data.sampahs);
+        });
+    }, []);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         no_polisi: '',
@@ -63,7 +75,7 @@ export default function Truk() {
                             <div className="flex items-center space-x-2">
                                 <Label htmlFor="kode_supplier">Supplier</Label>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center">
                                 <Select onValueChange={(value) => setData('kode_supplier', value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih supplier" />
@@ -83,7 +95,7 @@ export default function Truk() {
                             <div className="flex items-center space-x-2">
                                 <Label htmlFor="barang">Jenis Sampah</Label>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center">
                                 <Select onValueChange={(value) => setData('barang', value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih jenis sampah" />

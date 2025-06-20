@@ -80,8 +80,7 @@ export interface Supplier {
 };
 
 export interface PageProps extends InertiaPageProps {
-    timbangans: Timbangan[];
-    newTicketNumber: string;
+    newTicketNumber?: string;
     trucks: Truck[];
     sampahs: Sampah[];
     suppliers: Supplier[];

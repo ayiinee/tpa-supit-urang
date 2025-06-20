@@ -45,8 +45,16 @@ class TimbanganController extends Controller
             });
 
         $sampah = Sampah::all();
-        $trucks = Truk::select('no_polisi', 'nama_supir')->get();
-
+        $trucks = Truk::with('sampah')->get()
+            ->map(function ($item) {
+                return [
+                    'no_polisi' => $item->no_polisi,
+                    'nama_supir' => $item->nama_supir,
+                    'barang' => $item->sampah ? [
+                        'jenis_sampah' => $item->sampah->jenis_sampah,
+                    ] : null,
+                ];
+            });
         $newTicketNumber = $this->generateNoTiket();
 
         return Inertia::render('Dashboard', [
@@ -176,6 +184,39 @@ class TimbanganController extends Controller
             'incomplete_entry' => $entries->firstWhere('berat_keluar', null)
         ]);
     }
+
+    public function getLastIncomplete($no_polisi)
+    {
+        $today = Carbon::today();
+
+        $incomplete = Timbangan::where('no_polisi', $no_polisi)
+            ->whereDate('tanggal', $today)
+            ->whereNull('berat_keluar')
+            ->orderByDesc('no_tiket')
+            ->first();
+
+        return response()->json([
+            'entry' => $incomplete,
+        ]);
+    }
+
+    public function generateNoTiketAPI()
+    {
+        return response()->json([
+            'no_tiket' => $this->generateNoTiket()
+        ]);
+    }
+
+    public function getAll()
+    {
+        $timbangans = Timbangan::with(['sampah', 'truk'])
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('no_tiket', 'desc')
+            ->get();
+
+        return response()->json($timbangans);
+    }
+
 
     /**
      * Generate automatic ticket number

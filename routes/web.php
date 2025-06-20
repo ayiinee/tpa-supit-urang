@@ -3,6 +3,7 @@
 use App\Http\Controllers\TimbanganController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SampahController;
+use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TrukController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -13,14 +14,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
     Route::controller(TimbanganController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard');
         Route::post('/dashboard', 'store')->name('dashboard.store');
         Route::put('/dashboard/{no_tiket}', [TimbanganController::class, 'update'])->name('dashboard.update');
         Route::delete('/dashboard/{no_tiket}', [TimbanganController::class, 'destroy'])->name('dashboard.destroy');
         Route::get('/dashboard/entries/{no_polisi}', [TimbanganController::class, 'getTodayEntries'])->name('dashboard.entries');
-
     });
 
     Route::controller(SupplierController::class)->group(function () {
@@ -43,7 +43,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/truk/{id}', 'destroy')->name('truk.destroy');
     });
 
+    Route::prefix('api')->group(function () {
+        Route::get('/entries/{no_polisi}', [TimbanganController::class, 'getTodayEntries']);
+        Route::get('/timbangan/incomplete/{no_polisi}', [TimbanganController::class, 'getLastIncomplete']);
+        Route::get('/timbangan/next-ticket', [TimbanganController::class, 'generateNoTiketAPI']);
+        Route::get('/timbangans', [TimbanganController::class, 'getAll']);
+        Route::get('/truk-data', [TrukController::class, 'fetchAll']);
+
+
+        Route::post('/live-weight', [RealtimeController::class, 'updateBerat']);
+        Route::get('/live-weight', [RealtimeController::class, 'getBerat']);
+    });
 });
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

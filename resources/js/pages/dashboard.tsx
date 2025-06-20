@@ -5,9 +5,10 @@ import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, PageProps } from '@/types';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { type BreadcrumbItem, PageProps, Timbangan } from '@/types';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -17,8 +18,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard() {
-    const { timbangans, newTicketNumber, trucks, sampahs } = usePage<PageProps>().props;
+    const { trucks, sampahs } = usePage<PageProps>().props;
+    const [timbangans, setTimbangans] = useState<Timbangan[]>([]);
     const [open, setOpen] = useState(false);
+    const [newTicketNumber, setNewTicketNumber] = useState('');
+    const [entryMode, setEntryMode] = useState<'masuk' | 'keluar'>('masuk');
+    const [lastEntry, setLastEntry] = useState<any>(null);
+    const [liveWeight, setLiveWeight] = useState(0);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         no_polisi: '',
@@ -28,38 +34,24 @@ export default function Dashboard() {
         berat_keluar: '',
     });
 
-    // State untuk menentukan mode entry (masuk/keluar)
-    const [entryMode, setEntryMode] = useState<'masuk' | 'keluar'>('masuk');
-    const [lastEntry, setLastEntry] = useState<any>(null);
-
-    // Fungsi untuk menghitung jumlah entry no polisi hari ini
-    const getTodayEntryCount = useMemo(() => {
-        if (!data.no_polisi) return 0;
-
-        const today = new Date().toDateString();
-        return timbangans.filter((item) => {
-            const itemDate = new Date(item.tanggal).toDateString();
-            return itemDate === today && item.no_polisi === data.no_polisi;
-        }).length;
-    }, [data.no_polisi, timbangans]);
-
-    // Fungsi untuk mendapatkan entry terakhir yang belum ada berat keluarnya
-    const getLastIncompleteEntry = useMemo(() => {
-        if (!data.no_polisi) return null;
-
-        const today = new Date().toDateString();
-        const todayEntries = timbangans
-            .filter((item) => {
-                const itemDate = new Date(item.tanggal).toDateString();
-                return itemDate === today && item.no_polisi === data.no_polisi;
+    const fetchTimbangans = () => {
+        axios
+            .get('/api/timbangans')
+            .then((res) => {
+                setTimbangans(res.data); // pastikan ini array
             })
-            .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
+            .catch((err) => {
+                console.error('Gagal fetch timbangans:', err);
+            });
+    };
 
-        // Cari entry terakhir yang belum ada berat keluarnya
-        return todayEntries.find((entry) => !entry.berat_keluar) || null;
-    }, [data.no_polisi, timbangans]);
+    useEffect(() => {
+        axios.get('/api/timbangan/next-ticket').then((res) => {
+            setNewTicketNumber(res.data.no_tiket);
+        });
+        fetchTimbangans();
+    }, []);
 
-    // Effect untuk menentukan mode entry berdasarkan jumlah entry
     useEffect(() => {
         if (!data.no_polisi) {
             setEntryMode('masuk');
@@ -67,52 +59,87 @@ export default function Dashboard() {
             return;
         }
 
-        const incompleteEntry = getLastIncompleteEntry;
+        axios
+            .get(`/api/timbangan/incomplete/${data.no_polisi}`)
+            .then((res) => {
+                const incompleteEntry = res.data.entry;
 
-        if (incompleteEntry) {
-            // Ada entry yang belum complete, mode keluar
-            setEntryMode('keluar');
-            setLastEntry(incompleteEntry);
-            // Set data dari entry yang belum complete
+                if (incompleteEntry) {
+                    setEntryMode('keluar');
+                    setLastEntry(incompleteEntry);
+                    setData((prev) => ({
+                        ...prev,
+                        nama_supir: incompleteEntry.nama_supir,
+                        id_sampah: String(incompleteEntry.sampah?.id_sampah || ''),
+                        berat_masuk: String(incompleteEntry.berat_masuk),
+                    }));
+                } else {
+                    setEntryMode('masuk');
+                    setLastEntry(null);
+
+                    const selectedTruck = trucks.find((truck) => truck.no_polisi === data.no_polisi);
+                    setData((prev) => ({
+                        ...prev,
+                        nama_supir: selectedTruck?.nama_supir || '',
+                        id_sampah: prev.id_sampah || '',
+                        berat_masuk: '',
+                        berat_keluar: '',
+                    }));
+                }
+            })
+            .catch((err) => {
+                console.error('Gagal fetch entry:', err);
+                setEntryMode('masuk');
+                setLastEntry(null);
+            });
+    }, [data.no_polisi]);
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const res = await axios.get('/api/live-weight');
+                setLiveWeight(res.data.berat);
+            } catch (e) {
+                console.error('Gagal fetch berat:', e);
+            }
+        }, 1000); // polling tiap 1 detik
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        if (entryMode === 'masuk') {
             setData((prev) => ({
                 ...prev,
-                nama_supir: incompleteEntry.nama_supir,
-                id_sampah: String(incompleteEntry.sampah?.id || ''),
-                berat_masuk: String(incompleteEntry.berat_masuk),
+                berat_masuk: String(liveWeight),
             }));
-        } else {
-            // Semua entry sudah complete, mode masuk
-            setEntryMode('masuk');
-            setLastEntry(null);
-            // Reset form kecuali no_polisi dan nama_supir
-            const selectedTruck = trucks.find((truck) => truck.no_polisi === data.no_polisi);
+        } else if (entryMode === 'keluar') {
             setData((prev) => ({
                 ...prev,
-                nama_supir: selectedTruck?.nama_supir || '',
-                id_sampah: '',
-                berat_masuk: '',
-                berat_keluar: '',
+                berat_keluar: String(liveWeight),
             }));
         }
-    }, [data.no_polisi, getLastIncompleteEntry]);
-
+    }, [liveWeight, entryMode]);
+    
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (entryMode === 'keluar' && lastEntry) {
-            // Update entry yang sudah ada
             put(route('dashboard.update', lastEntry.no_tiket), {
                 preserveScroll: true,
                 onSuccess: () => {
                     reset();
                     setLastEntry(null);
+                    fetchTimbangans();
                 },
             });
         } else {
-            // Buat entry baru
             post(route('dashboard.store'), {
                 preserveScroll: true,
-                onSuccess: () => reset(),
+                onSuccess: () => {
+                    reset();
+                    fetchTimbangans();
+                },
             });
         }
     };
@@ -121,7 +148,30 @@ export default function Dashboard() {
         setData('no_polisi', value);
         const selectedTruck = trucks.find((truck) => truck.no_polisi === value);
         if (selectedTruck) {
-            setData('nama_supir', selectedTruck.nama_supir);
+            setData((prev) => ({
+                ...prev,
+                nama_supir: selectedTruck.nama_supir,
+                id_sampah: '', // akan kita isi otomatis di bawah
+            }));
+
+            // Cari id sampah berdasarkan jenis sampah dari `barang`
+            const matchingSampah = sampahs.find((sampah) => sampah.jenis_sampah === selectedTruck.barang?.jenis_sampah);
+
+            if (matchingSampah) {
+                setData((prev) => ({
+                    ...prev,
+                    id_sampah: String(matchingSampah.id),
+                }));
+            }
+        }
+    };
+
+    const tesKirimBerat = async () => {
+        try {
+            const res = await axios.post('/api/live-weight', { berat: 123 });
+            console.log('API OK:', res.data);
+        } catch (err) {
+            console.error('API ERROR:', err);
         }
     };
 
@@ -134,7 +184,12 @@ export default function Dashboard() {
                         onSubmit={handleSubmit}
                         className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                     >
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
+                        <div className="rounded-xl border border-dashed p-4 text-center shadow-sm">
+                            <p className="text-sm text-muted-foreground">Berat Real-Time</p>
+                            <p className="text-3xl font-bold text-green-600">{liveWeight} kg</p>
+                        </div>
+
+                        <div className="m-4 mx-2 mb-2 grid md:grid-cols-2">
                             <div className="flex items-center space-x-2">
                                 <Label htmlFor="no_tiket">No. Tiket</Label>
                             </div>
@@ -257,6 +312,10 @@ export default function Dashboard() {
                         )}
 
                         <div className="mx-2 mt-4 flex justify-end">
+                            <Button onClick={tesKirimBerat} className="mr-2">
+                                Tes Kirim Berat ke API
+                            </Button>
+
                             <Button type="submit" disabled={processing}>
                                 {entryMode === 'masuk' ? 'Simpan' : 'Update'}
                             </Button>
@@ -320,7 +379,7 @@ export default function Dashboard() {
                                             onClick={() => {
                                                 if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
                                                     router.delete(route('dashboard.destroy', item.no_tiket));
-                                            }
+                                                }
                                             }}
                                         >
                                             Hapus
