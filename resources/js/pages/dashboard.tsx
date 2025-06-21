@@ -9,6 +9,8 @@ import { type BreadcrumbItem, PageProps, Timbangan } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import TruckMap from '@/components/TruckMap';
+import { Card } from '@/components/ui/card';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -24,6 +26,7 @@ export default function Dashboard() {
     const [newTicketNumber, setNewTicketNumber] = useState('');
     const [entryMode, setEntryMode] = useState<'masuk' | 'keluar'>('masuk');
     const [lastEntry, setLastEntry] = useState<any>(null);
+    const [truckPositions, setTruckPositions] = useState([]);
     const [liveWeight, setLiveWeight] = useState(0);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -51,6 +54,20 @@ export default function Dashboard() {
         });
         fetchTimbangans();
     }, []);
+
+
+useEffect(() => {
+    const fetchData = async () => {
+        const res = await axios.get('/api/trackings/latest');
+        setTruckPositions(res.data);
+    };
+
+    fetchData();
+
+    // Optional: refresh setiap 15 detik
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+}, []);
 
     useEffect(() => {
         if (!data.no_polisi) {
@@ -323,10 +340,10 @@ export default function Dashboard() {
                     </form>
 
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+                        <Card ></Card>
                     </div>
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
+                        <TruckMap trucks={truckPositions} />
                     </div>
                 </div>
 

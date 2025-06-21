@@ -4,6 +4,7 @@ use App\Http\Controllers\TimbanganController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SampahController;
 use App\Http\Controllers\RealtimeController;
+use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\TrukController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -49,6 +50,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/timbangan/next-ticket', [TimbanganController::class, 'generateNoTiketAPI']);
         Route::get('/timbangans', [TimbanganController::class, 'getAll']);
         Route::get('/truk-data', [TrukController::class, 'fetchAll']);
+Route::post('/traccar', [TrackingController::class, 'store']);
+Route::get('/trackings/latest', [TrackingController::class, 'latest']); // frontend fetch lokasi
 
 
         Route::post('/live-weight', [RealtimeController::class, 'updateBerat']);
