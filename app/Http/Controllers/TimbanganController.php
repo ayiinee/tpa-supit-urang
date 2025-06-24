@@ -240,6 +240,19 @@ class TimbanganController extends Controller
 
         return $dateString . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
+    public function storeFromExternal(Request $request)
+    {
+        $validated = $request->validate([
+            'berat' => 'required|numeric',
+        ]);
+
+        // Simpan ke cache supaya bisa dibaca oleh frontend
+        cache()->put('berat_terakhir', [
+            'berat' => $validated['berat'],
+        ], now()->addSeconds(10)); // expired dalam 10 detik
+
+        return response()->json(['status' => 'berhasil simpan']);
+    }
 
     /**
      * Get statistics for dashboard
@@ -265,24 +278,20 @@ class TimbanganController extends Controller
             'week' => $weekStats
         ]);
     }
+
+    /**
+     * Get statistics for dashboard
+     */
+    public function getTodayStats()
+    {
+        $today = Carbon::today();
+
+        $totalBeratHariIni = Timbangan::whereDate('tanggal', $today)
+            ->whereNotNull('netto')
+            ->sum('netto');
+
+        return response()->json([
+            'total_netto_today' => round($totalBeratHariIni, 2),
+        ]);
+    }
 }
-
-/**
- * Get statistics for dashboard
- */
-//     public function getStatistics()
-//     {
-//         $today = Carbon::today();
-//         $thisMonth = Carbon::now()->startOfMonth();
-
-//         $stats = [
-//             'today_count' => Timbangan::whereDate('tanggal', $today)->count(),
-//             'today_total_weight' => Timbangan::whereDate('tanggal', $today)->sum('netto') ?? 0,
-//             'month_count' => Timbangan::where('tanggal', '>=', $thisMonth)->count(),
-//             'month_total_weight' => Timbangan::where('tanggal', '>=', $thisMonth)->sum('netto') ?? 0,
-//             'pending_keluar' => Timbangan::whereNull('berat_keluar')->count(),
-//         ];
-
-//         return response()->json($stats);
-//     }
-// }

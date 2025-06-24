@@ -6,22 +6,35 @@ use App\Http\Controllers\SampahController;
 use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\TrukController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+// Tambahkan route publik di luar grup auth
+Route::post('/api/external/berat', [TimbanganController::class, 'storeFromExternal'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('external.berat');
+
+Route::get('/api/external/berat-terakhir', function () {
+    $berat = cache()->get('berat_terakhir');
+    return response()->json($berat ?? []);
+});
+Route::post('/api/live-weight', [RealtimeController::class, 'updateBerat'])
+            ->withoutMiddleware([VerifyCsrfToken::class]);
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::controller(TimbanganController::class)->group(function () {
         Route::get('/dashboard', 'index')->name('dashboard');
         Route::post('/dashboard', 'store')->name('dashboard.store');
-        Route::put('/dashboard/{no_tiket}', [TimbanganController::class, 'update'])->name('dashboard.update');
-        Route::delete('/dashboard/{no_tiket}', [TimbanganController::class, 'destroy'])->name('dashboard.destroy');
-        Route::get('/dashboard/entries/{no_polisi}', [TimbanganController::class, 'getTodayEntries'])->name('dashboard.entries');
+        Route::put('/dashboard/{no_tiket}', 'update')->name('dashboard.update');
+        Route::delete('/dashboard/{no_tiket}', 'destroy')->name('dashboard.destroy');
+        Route::get('/dashboard/entries/{no_polisi}', 'getTodayEntries')->name('dashboard.entries');
     });
 
     Route::controller(SupplierController::class)->group(function () {
@@ -37,6 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/sampah/{id}', 'update')->name('sampah.update');
         Route::delete('/sampah/{id}', 'destroy')->name('sampah.destroy');
     });
+
     Route::controller(TrukController::class)->group(function () {
         Route::get('/truk', 'index')->name('truk');
         Route::post('/truk', 'store')->name('truk.store');
@@ -50,11 +64,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/timbangan/next-ticket', [TimbanganController::class, 'generateNoTiketAPI']);
         Route::get('/timbangans', [TimbanganController::class, 'getAll']);
         Route::get('/truk-data', [TrukController::class, 'fetchAll']);
-Route::post('/traccar', [TrackingController::class, 'store']);
-Route::get('/trackings/latest', [TrackingController::class, 'latest']); // frontend fetch lokasi
+        Route::post('/traccar', [TrackingController::class, 'store']);
+        Route::get('/trackings/latest', [TrackingController::class, 'latest']);
+        Route::get('/dashboard/statistik', [TimbanganController::class, 'getTodayStats']);
 
-
-        Route::post('/live-weight', [RealtimeController::class, 'updateBerat']);
+        
         Route::get('/live-weight', [RealtimeController::class, 'getBerat']);
     });
 });

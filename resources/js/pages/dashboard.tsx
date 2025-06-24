@@ -1,7 +1,7 @@
+import TruckMap from '@/components/TruckMap';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
@@ -9,8 +9,6 @@ import { type BreadcrumbItem, PageProps, Timbangan } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import TruckMap from '@/components/TruckMap';
-import { Card } from '@/components/ui/card';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -28,6 +26,7 @@ export default function Dashboard() {
     const [lastEntry, setLastEntry] = useState<any>(null);
     const [truckPositions, setTruckPositions] = useState([]);
     const [liveWeight, setLiveWeight] = useState(0);
+    const [todayStats, setTodayStats] = useState<{ total_netto_today: number } | null>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         no_polisi: '',
@@ -55,19 +54,52 @@ export default function Dashboard() {
         fetchTimbangans();
     }, []);
 
+    useEffect(() => {
+        const fetchData = async () => {
+            const res = await axios.get('/api/trackings/latest');
+            setTruckPositions(res.data);
+        };
 
-useEffect(() => {
-    const fetchData = async () => {
-        const res = await axios.get('/api/trackings/latest');
-        setTruckPositions(res.data);
-    };
+        fetchData();
 
-    fetchData();
+        // Optional: refresh setiap 15 detik
+        const interval = setInterval(fetchData, 15000);
+        return () => clearInterval(interval);
+    }, []);
 
-    // Optional: refresh setiap 15 detik
-    const interval = setInterval(fetchData, 15000);
+    useEffect(() => {
+    const interval = setInterval(async () => {
+        try {
+            const res = await axios.get('/api/external/berat-terakhir');
+            const { no_polisi, berat } = res.data;
+
+            if (no_polisi && berat) {
+                setData((prev) => ({
+                    ...prev,
+                    no_polisi,
+                }));
+
+                handlePolisiChange(no_polisi); // trigger autofill lainnya
+
+                if (entryMode === 'masuk') {
+                    setData((prev) => ({
+                        ...prev,
+                        berat_masuk: String(berat),
+                    }));
+                } else {
+                    setData((prev) => ({
+                        ...prev,
+                        berat_keluar: String(berat),
+                    }));
+                }
+            }
+        } catch (err) {
+            console.error('Gagal fetch berat dari eksternal:', err);
+        }
+    }, 2000); // polling tiap 2 detik
+
     return () => clearInterval(interval);
-}, []);
+}, [entryMode]);
 
     useEffect(() => {
         if (!data.no_polisi) {
@@ -125,6 +157,16 @@ useEffect(() => {
     }, []);
 
     useEffect(() => {
+        fetch('/api/dashboard/statistik')
+            .then((res) => res.json())
+            .then((data) => {
+                console.log('Statistik harian:', data); // cek isi
+                setTodayStats(data);
+            })
+            .catch((error) => console.error('Gagal ambil statistik:', error));
+    }, []);
+
+    useEffect(() => {
         if (entryMode === 'masuk') {
             setData((prev) => ({
                 ...prev,
@@ -137,7 +179,7 @@ useEffect(() => {
             }));
         }
     }, [liveWeight, entryMode]);
-    
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -339,8 +381,17 @@ useEffect(() => {
                         </div>
                     </form>
 
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <Card ></Card>
+                    <div className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
+                        {/* <Card>                {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}</Card> */}
+                        <h2 className="mb-2 text-lg font-semibold">Statistik Hari Ini</h2>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600 dark:text-gray-300">Jumlah Sampah Masuk</span>
+                                <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                                    {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                         <TruckMap trucks={truckPositions} />
