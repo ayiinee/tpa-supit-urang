@@ -20,6 +20,7 @@ class TrukController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'no_lambung' => 'required|string|max:255|unique:truk,no_lambung',
             'no_polisi' => 'required|string|max:255',
             'nama_supir' => 'required|string|max:255',
             'kode_supplier' => 'required|string|exists:supplier,kode_supplier',
@@ -37,6 +38,7 @@ class TrukController extends Controller
         $truk = Truk::findOrFail($id);
 
         $request->validate([
+            'no_lambung' => 'required|string|max:255|unique:truk,no_lambung,',
             'no_polisi' => 'required|string|max:255',
             'nama_supir' => 'required|string|max:255',
             'golongan' => 'required|string|max:255',
@@ -69,6 +71,7 @@ class TrukController extends Controller
         ->map(function ($item) {
             return [
                 'id' => $item->id,
+                'no_lambung' => $item->no_lambung,
                 'no_polisi' => $item->no_polisi,
                 'nama_supir' => $item->nama_supir,
                 'kode_supplier' => [

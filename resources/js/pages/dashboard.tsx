@@ -29,6 +29,7 @@ export default function Dashboard() {
     const [todayStats, setTodayStats] = useState<{ total_netto_today: number } | null>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
+        no_lambung: '',
         no_polisi: '',
         nama_supir: '',
         id_sampah: '',
@@ -211,6 +212,7 @@ export default function Dashboard() {
                 ...prev,
                 nama_supir: selectedTruck.nama_supir,
                 id_sampah: '', // akan kita isi otomatis di bawah
+                no_lambung: selectedTruck.no_lambung, // tambahkan no_lambung
             }));
 
             // Cari id sampah berdasarkan jenis sampah dari `barang`
@@ -281,6 +283,22 @@ export default function Dashboard() {
                                 </Select>
                             </div>
                         </div>
+                        
+                        <div className="mx-2 mb-2 grid md:grid-cols-2">
+                            <div className="flex items-center space-x-2">
+                                <Label htmlFor="no_lambung">No. Lambung</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Input
+                                    id="no_lambung"
+                                    type="text"
+                                    value={data.no_lambung}
+                                    onChange={(e) => setData('no_lambung', e.target.value)}
+                                    disabled={entryMode === 'keluar'}
+                                />
+                            </div>
+                        </div>
+
 
                         <div className="mx-2 mb-2 grid md:grid-cols-2">
                             <div className="flex items-center space-x-2">
@@ -405,6 +423,7 @@ export default function Dashboard() {
                                 <TableHead>No. Tiket</TableHead>
                                 <TableHead>Tanggal</TableHead>
                                 <TableHead>No. Polisi</TableHead>
+                                <TableHead>No. Lambung</TableHead>
                                 <TableHead>Nama Supir</TableHead>
                                 <TableHead>Jenis Sampah</TableHead>
                                 <TableHead>Berat Masuk</TableHead>
@@ -419,6 +438,7 @@ export default function Dashboard() {
                                     <TableCell>{item.no_tiket}</TableCell>
                                     <TableCell>{new Date(item.tanggal).toLocaleDateString()}</TableCell>
                                     <TableCell>{item.no_polisi}</TableCell>
+                                    <TableCell>{item.no_lambung || '-'}</TableCell>
                                     <TableCell>{item.nama_supir}</TableCell>
                                     <TableCell>{item.sampah?.jenis_sampah}</TableCell>
                                     <TableCell>{item.berat_masuk}</TableCell>
@@ -430,6 +450,7 @@ export default function Dashboard() {
                                             size="sm"
                                             onClick={() => {
                                                 setData({
+                                                    no_lambung: item.no_lambung || '',
                                                     no_polisi: item.no_polisi,
                                                     nama_supir: item.nama_supir,
                                                     id_sampah: String(item.sampah?.id || ''),

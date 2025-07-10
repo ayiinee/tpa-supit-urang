@@ -12,6 +12,7 @@ class TrukSeeder extends Seeder
         DB::table('truk')->insert([
             [
                 'no_polisi' => 'N1234AB',
+                'no_lambung' => 'L001',
                 'golongan' => 'Truk Kecil',
                 'kode_supplier' => 'SUP001',
                 'barang' => 'Organik',

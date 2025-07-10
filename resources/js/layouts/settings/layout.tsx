@@ -22,6 +22,12 @@ const sidebarNavItems: NavItem[] = [
         href: '/settings/appearance',
         icon: null,
     },
+    {
+        title: 'Ports',
+        href: '/settings/ports-setting',
+        icon: null,
+    },
+    
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {

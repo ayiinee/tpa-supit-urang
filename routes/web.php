@@ -14,18 +14,28 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-// Tambahkan route publik di luar grup auth
-Route::post('/api/external/berat', [TimbanganController::class, 'storeFromExternal'])
-    ->withoutMiddleware([VerifyCsrfToken::class])
-    ->name('external.berat');
+Route::middleware([
+    // Middleware default dihapuskan
+])->withoutMiddleware([VerifyCsrfToken::class])->group(function () {
 
-Route::get('/api/external/berat-terakhir', function () {
-    $berat = cache()->get('berat_terakhir');
-    return response()->json($berat ?? []);
+    Route::post('/api/external/berat', [TimbanganController::class, 'storeFromExternal'])
+        ->name('external.berat');
+
+    Route::get('/api/external/berat-terakhir', function () {
+        $berat = cache()->get('berat_terakhir');
+        return response()->json($berat ?? []);
+    });
+
+    Route::get('/api/live-weight', [RealtimeController::class, 'getBerat']);
+
+    Route::post('/api/live-weight', [RealtimeController::class, 'updateBerat']);
+
+    Route::get('/api/available-ports', [RealtimeController::class, 'getAvailablePorts']);
+
+    Route::post('/api/set-ports', [RealtimeController::class, 'setPorts']);
+    
+    // Route
 });
-Route::post('/api/live-weight', [RealtimeController::class, 'updateBerat'])
-            ->withoutMiddleware([VerifyCsrfToken::class]);
-
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -68,8 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/trackings/latest', [TrackingController::class, 'latest']);
         Route::get('/dashboard/statistik', [TimbanganController::class, 'getTodayStats']);
 
-        
-        Route::get('/live-weight', [RealtimeController::class, 'getBerat']);
+
     });
 });
 

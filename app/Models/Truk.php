@@ -16,6 +16,7 @@ class Truk extends Model
         'kode_supplier',
         'barang',
         'nama_supir',
+        'no_lambung'
     ];
 
     public function supplier()
@@ -31,5 +32,6 @@ class Truk extends Model
     public function timbangans()
     {
         return $this->hasMany(Timbangan::class, 'no_polisi', 'no_polisi');
+        return $this->hasMany(Timbangan::class, 'no_lambung', 'no_lambung');
     }
 }

@@ -44,23 +44,25 @@ export interface User {
 }
 
 export interface Timbangan {
-  no_tiket: string;
-  tanggal: string;
-  no_polisi: string;
-  nama_supir: string;
-  berat_masuk: number;
-  berat_keluar?: number | null;
-  netto?: number | null;
-  sampah?: {
+    no_tiket: string;
+    no_lambung?: string; // Optional, as it may not be present in all records
+    tanggal: string;
+    no_polisi: string;
+    nama_supir: string;
+    berat_masuk: number;
+    berat_keluar?: number | null;
+    netto?: number | null;
+    sampah?: {
     jenis_sampah: string;
     id: number;
-  };
-  truk?: {
+    };
+    truk?: {
     no_polisi: string;
-  };
+    };
 }
 
 export interface Truck {
+    no_lambung: string;
     no_polisi: string;
     nama_supir: string;
     kode_supplier?: { nama_supplier: string };

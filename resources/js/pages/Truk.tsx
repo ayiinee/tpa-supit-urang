@@ -33,6 +33,7 @@ export default function Truk() {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         no_polisi: '',
+        no_lambung: '',
         nama_supir: '',
         kode_supplier: '',
         barang: '',
@@ -55,6 +56,14 @@ export default function Truk() {
                         onSubmit={handleSubmit}
                         className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                     >
+                        <div className="mx-2 mb-2 grid md:grid-cols-2">
+                            <div className="flex items-center space-x-2">
+                                <Label htmlFor="no_lambung">No. Lambung</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Input id="no_lambung" type="text" value={data.no_lambung} onChange={(e) => setData('no_lambung', e.target.value)} />
+                            </div>
+                        </div>
                         <div className="mx-2 mb-2 grid md:grid-cols-2">
                             <div className="flex items-center space-x-2">
                                 <Label htmlFor="no_polisi">No. Polisi</Label>
@@ -127,6 +136,7 @@ export default function Truk() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>No.</TableHead>
+                                    <TableHead>No. Lambung</TableHead>
                                     <TableHead>No. Polisi</TableHead>
                                     <TableHead>Nama Supir</TableHead>
                                     <TableHead>Barang</TableHead>
@@ -138,6 +148,7 @@ export default function Truk() {
                                 {trucks.map((item: any, index: number) => (
                                     <TableRow key={item.id}>
                                         <TableCell>{index + 1}</TableCell>
+                                        <TableCell>{item.no_lambung}</TableCell>
                                         <TableCell>{item.no_polisi}</TableCell>
                                         <TableCell>{item.nama_supir}</TableCell>
                                         <TableCell>{item.barang?.jenis_sampah}</TableCell>
@@ -149,6 +160,7 @@ export default function Truk() {
                                                 onClick={() => {
                                                     setOpen(true);
                                                     setData({
+                                                        no_lambung: item.no_lambung,
                                                         no_polisi: item.no_polisi,
                                                         nama_supir: item.nama_supir,
                                                         kode_supplier: item.kode_supplier?.kode_supplier,

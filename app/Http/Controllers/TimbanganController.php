@@ -28,6 +28,7 @@ class TimbanganController extends Controller
                     'no_tiket' => $item->no_tiket,
                     'tanggal' => $item->tanggal,
                     'no_polisi' => $item->no_polisi,
+                    'no_lambung' => $item->no_lambung,
                     'nama_supir' => $item->nama_supir,
                     'id_sampah' => $item->id_sampah,
                     'berat_masuk' => $item->berat_masuk,
@@ -48,6 +49,7 @@ class TimbanganController extends Controller
         $trucks = Truk::with('sampah')->get()
             ->map(function ($item) {
                 return [
+                    'no_lambung' => $item->no_lambung,
                     'no_polisi' => $item->no_polisi,
                     'nama_supir' => $item->nama_supir,
                     'barang' => $item->sampah ? [
@@ -72,6 +74,7 @@ class TimbanganController extends Controller
     {
         $validated = $request->validate([
             'no_polisi' => ['required', 'string', 'max:20', Rule::exists('truk', 'no_polisi')],
+            'no_lambung' => ['nullable', 'string', 'max:20', Rule::exists('truk', 'no_lambung')],
             'nama_supir' => 'required|string|max:255',
             'id_sampah' => 'required|exists:sampah,id',
             'berat_masuk' => 'required|numeric|min:0|max:999999.99',
@@ -247,7 +250,7 @@ class TimbanganController extends Controller
         ]);
 
         // Simpan ke cache supaya bisa dibaca oleh frontend
-        cache()->put('berat_terakhir', [
+        cache()->put('berat-terakhir', [
             'berat' => $validated['berat'],
         ], now()->addSeconds(10)); // expired dalam 10 detik
 

@@ -18,16 +18,19 @@ class Timbangan extends Model
         'no_tiket',
         'tanggal',
         'no_polisi',
+        'no_lambung',
         'nama_supir',
         'id_sampah',
         'berat_masuk',
         'berat_keluar',
         'netto',
+
     ];
 
     public function truk()
     {
-        return $this->belongsTo(Truk::class, 'no_polisi', 'no_polisi');
+        return $this->belongsTo(Truk::class, 'no_polisi', 'no_polisi', 'no_lambung', 'no_lambung');
+
     }
 
     public function sampah()

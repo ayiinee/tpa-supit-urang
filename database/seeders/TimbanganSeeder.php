@@ -18,6 +18,7 @@ class TimbanganSeeder extends Seeder
             'no_tiket' => $noTiket,
             'tanggal' => $tanggal,
             'no_polisi' => 'N1234AB',
+            'no_lambung' => 'L001', // Tambahkan no_lambung
             'nama_supir' => 'Pak Darman',
             'id_sampah' => 1,
             'berat_masuk' => 120.5,
