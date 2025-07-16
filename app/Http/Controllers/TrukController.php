@@ -38,10 +38,9 @@ class TrukController extends Controller
         $truk = Truk::findOrFail($id);
 
         $request->validate([
-            'no_lambung' => 'required|string|max:255|unique:truk,no_lambung,',
+            'no_lambung' => 'required|string|max:255|unique:truk,no_lambung,' . $id,
             'no_polisi' => 'required|string|max:255',
             'nama_supir' => 'required|string|max:255',
-            'golongan' => 'required|string|max:255',
             'kode_supplier' => 'required|string|max:255',
             'barang' => 'required|string|max:255',
             'nama_supir' => 'required|string|max:255',

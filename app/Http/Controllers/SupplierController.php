@@ -41,11 +41,11 @@ class SupplierController extends Controller
         $supplier->update($request->all());
 
         return redirect()->route('supplier')->with('success', 'Supplier updated successfully.');
-    }
+}
     
-    public function destroy($kode_supplier)
+    public function destroy($id)
     {
-        $supplier = Supplier::where('kode_supplier', $kode_supplier)->firstOrFail();
+        $supplier = Supplier::where('id', $id)->firstOrFail();
         $supplier->delete();
 
         return redirect()->route('supplier')->with('success', 'Supplier deleted successfully.');

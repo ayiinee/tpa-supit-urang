@@ -21,13 +21,28 @@ export default function Sampah() {
         jenis_sampah: '',
     });
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('sampah.store'), {
-            preserveScroll: true,
-            onSuccess: () => reset(),
-        });
+        if (isEditing && editId !== null) {
+            router.put(route('sampah.update', editId), data, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    reset();
+                    setIsEditing(false);
+                    setEditId(null);
+                },
+            });
+        } else {
+            post(route('sampah.store'), {
+                preserveScroll: true,
+                onSuccess: () => reset(),
+            });
+        }
     };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Data Sampah" />
@@ -65,6 +80,20 @@ export default function Sampah() {
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>{item.jenis_sampah}</TableCell>
                                     <TableCell>
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => {
+                                                setData({
+                                                    jenis_sampah: item.jenis_sampah,
+                                                });
+                                                setIsEditing(true);
+                                                setEditId(item.id);
+                                            }}
+                                        >
+                                            Edit
+                                        </Button>
+
                                         <Button 
                                             variant="destructive" 
                                             size="sm" 

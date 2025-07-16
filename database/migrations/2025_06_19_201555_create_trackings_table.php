@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('trackings', function (Blueprint $table) {
             $table->id();
-            $table->string('no_lambung')->unique(false);
+            $table->string('no_lambung');
             $table->decimal('latitude', 10, 6);
             $table->decimal('longitude', 10, 6);
             $table->timestamps();
+            $table->foreign('no_lambung')->references('no_lambung')->on('truk')->onDelete('cascade');
         });
     }
 

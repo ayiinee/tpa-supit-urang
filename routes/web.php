@@ -34,7 +34,6 @@ Route::middleware([
 
     Route::post('/api/set-ports', [RealtimeController::class, 'setPorts']);
     
-    // Route
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

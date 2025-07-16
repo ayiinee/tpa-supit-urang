@@ -38,13 +38,26 @@ export default function Truk() {
         kode_supplier: '',
         barang: '',
     });
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('truk.store'), {
-            preserveScroll: true,
-            onSuccess: () => reset(),
-        });
+        if (isEditing && editId !== null) {
+            router.put(route('truk.update', editId), data, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    reset();
+                    setIsEditing(false);
+                    setEditId(null);
+                },
+            });
+        } else {
+            post(route('truk.store'), {
+                preserveScroll: true,
+                onSuccess: () => reset(),
+            });
+        }
     };
 
     return (
@@ -85,7 +98,7 @@ export default function Truk() {
                                 <Label htmlFor="kode_supplier">Supplier</Label>
                             </div>
                             <div className="flex items-center">
-                                <Select onValueChange={(value) => setData('kode_supplier', value)}>
+                                <Select value={data.kode_supplier} onValueChange={(value) => setData('kode_supplier', value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih supplier" />
                                     </SelectTrigger>
@@ -105,7 +118,7 @@ export default function Truk() {
                                 <Label htmlFor="barang">Jenis Sampah</Label>
                             </div>
                             <div className="flex items-center">
-                                <Select onValueChange={(value) => setData('barang', value)}>
+                                <Select value={data.barang} onValueChange={(value) => setData('barang', value)}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih jenis sampah" />
                                     </SelectTrigger>
@@ -136,9 +149,9 @@ export default function Truk() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>No.</TableHead>
-                                    <TableHead>No. Lambung</TableHead>
-                                    <TableHead>No. Polisi</TableHead>
-                                    <TableHead>Nama Supir</TableHead>
+                                    <TableHead className='whitespace-nowrap'>No. Lambung</TableHead>
+                                    <TableHead className='whitespace-nowrap'>No. Polisi</TableHead>
+                                    <TableHead className='whitespace-nowrap'>Nama Supir</TableHead>
                                     <TableHead>Barang</TableHead>
                                     <TableHead>Supplier</TableHead>
                                     <TableHead>Aksi</TableHead>
@@ -153,12 +166,14 @@ export default function Truk() {
                                         <TableCell>{item.nama_supir}</TableCell>
                                         <TableCell>{item.barang?.jenis_sampah}</TableCell>
                                         <TableCell>{item.kode_supplier?.nama_supplier}</TableCell>
-                                        <TableCell>
+                                        <TableCell className='whitespace-nowrap'>
                                             <Button
                                                 variant="secondary"
                                                 size="sm"
                                                 onClick={() => {
                                                     setOpen(true);
+                                                    setIsEditing(true);
+                                                    setEditId(item.id);
                                                     setData({
                                                         no_lambung: item.no_lambung,
                                                         no_polisi: item.no_polisi,

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Data Supplier',
@@ -22,12 +23,27 @@ export default function Supplier() {
         alamat: '',
     });
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
+
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('supplier.store'), {
-            preserveScroll: true,
-            onSuccess: () => reset(),
-        });
+        if (isEditing && editId !== null) {
+            router.put(route('supplier.update', editId), data, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    reset();
+                    setIsEditing(false);
+                    setEditId(null);
+                },
+            });
+        } else{
+                post(route('supplier.store'), {
+                preserveScroll: true,
+                onSuccess: () => reset(),
+            });
+        }
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -98,13 +114,27 @@ export default function Supplier() {
                                         <TableCell>{item.nama_supplier}</TableCell>
                                         <TableCell>{item.alamat}</TableCell>
                                         <TableCell>
-                                            
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setData({
+                                                        kode_supplier: item.kode_supplier,
+                                                        nama_supplier: item.nama_supplier,
+                                                        alamat: item.alamat,
+                                                    });
+                                                    setIsEditing(true);
+                                                    setEditId(item.id);
+                                                }}
+                                            >Edit
+
+                                            </Button>
                                             <Button
                                                 variant="destructive"
                                                 size="sm"
                                                 onClick={() => {
                                                     if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-                                                        router.delete(route('supplier.destroy', item.kode_supplier));
+                                                        router.delete(route('supplier.destroy', item.id));
                                                     }
                                                 }}
                                             >

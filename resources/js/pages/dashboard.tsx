@@ -1,3 +1,4 @@
+import CCTV from '@/components/cctv';
 import TruckMap from '@/components/TruckMap';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -411,8 +412,14 @@ export default function Dashboard() {
                             </div>
                         </div>
                     </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <TruckMap trucks={truckPositions} />
+                    <div>
+                        <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border mb-4">
+                            <CCTV src="http://127.0.0.1:5000/video" />
+                        </div>
+                        <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
+                            <TruckMap trucks={truckPositions} />
+                        </div>
+
                     </div>
                 </div>
 
@@ -422,12 +429,12 @@ export default function Dashboard() {
                             <TableRow>
                                 <TableHead>No. Tiket</TableHead>
                                 <TableHead>Tanggal</TableHead>
-                                <TableHead>No. Polisi</TableHead>
-                                <TableHead>No. Lambung</TableHead>
-                                <TableHead>Nama Supir</TableHead>
+                                <TableHead className='whitespace-nowrap'>No. Polisi</TableHead>
+                                <TableHead className='whitespace-nowrap'>No. Lambung</TableHead>
+                                <TableHead className='whitespace-nowrap'>Nama Supir</TableHead>
                                 <TableHead>Jenis Sampah</TableHead>
-                                <TableHead>Berat Masuk</TableHead>
-                                <TableHead>Berat Keluar</TableHead>
+                                <TableHead className='whitespace-nowrap'>Berat Masuk</TableHead>
+                                <TableHead className='whitespace-nowrap'>Berat Keluar</TableHead>
                                 <TableHead>Netto</TableHead>
                                 <TableHead>Action</TableHead>
                             </TableRow>
@@ -440,11 +447,11 @@ export default function Dashboard() {
                                     <TableCell>{item.no_polisi}</TableCell>
                                     <TableCell>{item.no_lambung || '-'}</TableCell>
                                     <TableCell>{item.nama_supir}</TableCell>
-                                    <TableCell>{item.sampah?.jenis_sampah}</TableCell>
+                                    <TableCell className='whitespace-normal'>{item.sampah?.jenis_sampah}</TableCell>
                                     <TableCell>{item.berat_masuk}</TableCell>
                                     <TableCell>{item.berat_keluar ?? '-'}</TableCell>
                                     <TableCell>{item.netto ?? '-'}</TableCell>
-                                    <TableCell>
+                                    <TableCell className='whitespace-nowrap'>
                                         <Button
                                             variant="outline"
                                             size="sm"

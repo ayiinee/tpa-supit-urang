@@ -29,9 +29,9 @@ class Truk extends Model
         return $this->belongsTo(Sampah::class, 'barang', 'id');
     }
 
-    public function timbangans()
-    {
-        return $this->hasMany(Timbangan::class, 'no_polisi', 'no_polisi');
-        return $this->hasMany(Timbangan::class, 'no_lambung', 'no_lambung');
-    }
+    // public function timbangans()
+    // {
+    //     return $this->hasMany(Timbangan::class, 'no_polisi', 'no_polisi');
+    //     return $this->hasMany(Timbangan::class, 'no_lambung', 'no_lambung');
+    // }
 }

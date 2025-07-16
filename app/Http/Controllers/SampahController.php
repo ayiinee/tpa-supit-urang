@@ -23,18 +23,17 @@ class SampahController extends Controller
             // 'tujuan' => 'required|string|max:255',
         ]);
 
-        sampah::create($request->all());
+        Sampah::create($request->all());
 
         return redirect()->route('sampah')->with('success', 'sampah created successfully.');
     }
 
     public function update(Request $request, $id)
     {
-        $sampah = sampah::findOrFail($id);
+        $sampah = Sampah::findOrFail($id);
 
         $request->validate([
             'jenis_sampah' => 'required|string|max:255',
-            // 'tujuan' => 'required|string|max:255',
         ]);
 
         $sampah->update($request->all());
@@ -44,7 +43,7 @@ class SampahController extends Controller
     
     public function destroy($id)
     {
-        $sampah = sampah::findOrFail($id);
+        $sampah = Sampah::findOrFail($id);
         $sampah->delete();
 
         return redirect()->route('sampah')->with('success', 'sampah deleted successfully.');
