@@ -36,6 +36,8 @@ Route::get('/driver/dashboard', function () {
 
 Route::post('/driver/login', [AuthController::class, 'login'])->name('driver.login.action');
 
+Route::post('/driver/track', [TrackingController::class, 'store'])->name('driver.track.store');
+
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
