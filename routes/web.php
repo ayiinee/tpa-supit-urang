@@ -6,6 +6,7 @@ use App\Http\Controllers\SampahController;
 use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\TrukController;
+use App\Http\Controllers\Driver\AuthController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,8 +24,18 @@ Route::get('/api/external/berat-terakhir', function () {
     $berat = cache()->get('berat_terakhir');
     return response()->json($berat ?? []);
 });
-Route::post('/api/live-weight', [RealtimeController::class, 'updateBerat'])
-            ->withoutMiddleware([VerifyCsrfToken::class]);
+Route::post('/api/live-weight', [RealtimeController::class, 'updateBerat'])->withoutMiddleware([VerifyCsrfToken::class]);
+
+Route::get('/driver', function () {
+    return Inertia::render('driver/LoginPage');
+})->name('driver.login.page');
+
+Route::get('/driver/dashboard', function () {
+    return Inertia::render('driver/DashboardPage');
+})->name('driver.dashboard');
+
+Route::post('/driver/login', [AuthController::class, 'login'])->name('driver.login.action');
+
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -68,8 +79,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/trackings/latest', [TrackingController::class, 'latest']);
         Route::get('/dashboard/statistik', [TimbanganController::class, 'getTodayStats']);
 
-        
+
         Route::get('/live-weight', [RealtimeController::class, 'getBerat']);
+
+
+
     });
 });
 
