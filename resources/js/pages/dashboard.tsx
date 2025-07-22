@@ -390,10 +390,6 @@ export default function Dashboard() {
                         )}
 
                         <div className="mx-2 mt-4 flex justify-end">
-                            <Button onClick={tesKirimBerat} className="mr-2">
-                                Tes Kirim Berat ke API
-                            </Button>
-
                             <Button type="submit" disabled={processing}>
                                 {entryMode === 'masuk' ? 'Simpan' : 'Update'}
                             </Button>
@@ -414,7 +410,7 @@ export default function Dashboard() {
                     </div>
                     <div>
                         <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border mb-4">
-                            <CCTV src="http://127.0.0.1:5000/video" />
+                            <CCTV src="192.168.0.2" />
                         </div>
                         <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <TruckMap trucks={truckPositions} />

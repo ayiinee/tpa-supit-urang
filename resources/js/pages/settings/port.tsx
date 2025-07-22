@@ -35,7 +35,7 @@ export default function Port() {
   const { data, setData, post, processing, errors, recentlySuccessful } =
     useForm({
       left: '',
-      right: '',
+      // right: '',
     });
 
   useEffect(() => {
@@ -55,9 +55,9 @@ export default function Port() {
     setData('left', value);
   };
 
-  const handleSelectRight = (value: string) => {
-    setData('right', value);
-  };
+  // const handleSelectRight = (value: string) => {
+  //   setData('right', value);
+  // };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +112,7 @@ export default function Port() {
             </div>
 
             {/* RIGHT PORT */}
-            <div className="grid gap-2">
+            {/* <div className="grid gap-2">
               <Label htmlFor="right">Right Port</Label>
 
               <DropdownMenu>
@@ -141,7 +141,7 @@ export default function Port() {
               </DropdownMenu>
 
               <InputError className="mt-2" message={errors.right} />
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-4">
               <Button disabled={processing}>Save</Button>

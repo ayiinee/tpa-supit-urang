@@ -1,11 +1,12 @@
-import requests
+import serial
 
-berat = 123  # Nilai dari alat timbang
-
-response = requests.post(
-    'http://localhost:8000/api/live-weight',
-    json={'berat': berat}
-)
-
-print(response.status_code)
-print(response.json())
+try:
+    ser = serial.Serial('COM4', 9600, timeout=1)
+    print(f"Opened {ser.name}")
+    
+    while True:
+        line = ser.readline().decode(errors='ignore').strip()
+        if line:
+            print(f"Received: {line}")
+except Exception as e:
+    print(f"Error: {e}")

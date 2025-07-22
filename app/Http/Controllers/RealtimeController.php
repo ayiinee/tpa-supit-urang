@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class RealtimeController extends Controller
 {
@@ -37,8 +38,9 @@ class RealtimeController extends Controller
     {
         $validated = $request->validate([
             'left' => 'required|string',
-            'right' => 'required|string',
+            // 'right' => 'required|string',
         ]);
+        Log::info('Set ports request:', $validated);
 
         $response = Http::post('http://localhost:5001/api/start-listener', $validated);
 
