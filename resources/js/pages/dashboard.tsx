@@ -1,6 +1,7 @@
 import CCTV from '@/components/cctv';
 import TruckMap from '@/components/TruckMap';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,6 +11,8 @@ import { type BreadcrumbItem, PageProps, Timbangan } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import ProgressBar from '@/components/ProgressBar';
+import { RecycleIcon } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -227,16 +230,6 @@ export default function Dashboard() {
             }
         }
     };
-
-    const tesKirimBerat = async () => {
-        try {
-            const res = await axios.post('/api/live-weight', { berat: 123 });
-            console.log('API OK:', res.data);
-        } catch (err) {
-            console.error('API ERROR:', err);
-        }
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
@@ -397,16 +390,55 @@ export default function Dashboard() {
                     </form>
 
                     <div className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
-                        {/* <Card>                {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}</Card> */}
-                        <h2 className="mb-2 text-lg font-semibold">Statistik Hari Ini</h2>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Jumlah Sampah Masuk</span>
-                                <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                                    {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
-                                </span>
+                        <h4 className="mb-2 font-semibold">Info Statistik</h4>
+                        <Card>
+                            <div className="flex flex-col  pr-4 pl-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">Jumlah Sampah</span>
+                                    <span className="text-xl font-bold">
+                                        {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
+                                    </span>
+                                </div>
                             </div>
+                        </Card>
+                        <h4 className="mb-2 mt-4 font-semibold">Jumlah Truk</h4>
+                        <div className='items-center justify-between mb-4 gap-4'>
+                            <Card>
+                                <div className="flex flex-col gap-2 pr-4 pl-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <RecycleIcon className="w-4 h-4 text-blue-600" />
+                                            </div>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Sorting Zone</span>
+                                        </div>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">153/200</span>
+                                    </div>
+                                    <ProgressBar value={(153 / 200) * 100} />
+                                </div>
+                            </Card>
+                            <Card>
+                                <div className="flex flex-col gap-2 pr-4 pl-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">Composting Zone</span>
+                                        <span className="text-xl font-bold">
+                                            {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Card>
+                            <Card>
+                                <div className="flex flex-col gap-2 pr-4 pl-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-300">Sanitary Landfill</span>
+                                        <span className="text-xl font-bold">
+                                            {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Card>
                         </div>
+                        
                     </div>
                     <div>
                         <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border mb-4">

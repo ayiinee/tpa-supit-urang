@@ -6,6 +6,7 @@ use App\Http\Controllers\SampahController;
 use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\TrukController;
+use App\Http\Controllers\Driver\AuthController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,7 +35,21 @@ Route::middleware([
 
     Route::post('/api/set-ports', [RealtimeController::class, 'setPorts']);
     
+    Route::post('/driver/track', [TrackingController::class, 'store'])->name('driver.track.store');
 });
+
+Route::get('/driver', function () {
+    return Inertia::render('driver/LoginPage');
+})->name('driver.login.page');
+
+Route::get('/driver/dashboard', function () {
+    return Inertia::render('driver/DashboardPage');
+})->name('driver.dashboard');
+
+Route::post('/driver/login', [AuthController::class, 'login'])->name('driver.login.action');
+
+
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
 

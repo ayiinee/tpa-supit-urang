@@ -26,7 +26,8 @@ return new class extends Migration
         Schema::create('truk', function (Blueprint $table) {
             $table->id();
             $table->string('no_polisi', 20)->unique();
-            $table->string('no_lambung', 20)->unique(); // Kolom no_lambung opsional
+            $table->string('no_lambung', 20)->unique();
+            $table->string('password');
             $table->string('kode_supplier', 20);
             $table->string('barang');
             $table->string('nama_supir');
@@ -48,7 +49,7 @@ return new class extends Migration
             $table->foreign('id_sampah')->references('id')->on('sampah')->onDelete('cascade');
             $table->foreign('no_lambung')->references('no_lambung')->on('truk')->onDelete('cascade');
         });
-        
+
 
     }
 
