@@ -91,8 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/traccar', [TrackingController::class, 'store']);
         Route::get('/trackings/latest', [TrackingController::class, 'latest']);
         Route::get('/dashboard/statistik', [TimbanganController::class, 'getTodayStats']);
-
-
+        Route::get('/zone-stats', [TrackingController::class, 'getZoneStats']);
     });
 });
 

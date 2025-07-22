@@ -2,24 +2,41 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 // tinggal diatur koordinat areanya
-const tpaArea = {
-    minLat: -6.25,
-    maxLat: -6.10,
-    minLon: 106.70,
-    maxLon: 106.95,
-
+const zoneAreas = {
+    'Sorting Zone': {
+        minLat: -6.25,
+maxLat: -6.10,
+minLon: 106.70,
+maxLon: 106.95,
+    },
+    'Composting Zone': {
+        minLat: -6.20, maxLat: -6.15,
+        minLon: 106.75, maxLon: 106.80,
+    },
+    'Sanitary Landfill': {
+        minLat: -6.15, maxLat: -6.10,
+        minLon: 106.80, maxLon: 106.85,
+    },
 };
 
-function isInsideArea(latitude: number, longitude: number): boolean {
-    const { minLat, maxLat, minLon, maxLon } = tpaArea;
-    return latitude >= minLat && latitude <= maxLat && longitude >= minLon && longitude <= maxLon;
+function detectZone(latitude: number, longitude: number): string | null {
+    for (const [zoneName, area] of Object.entries(zoneAreas)) {
+        const { minLat, maxLat, minLon, maxLon } = area;
+        if (latitude >= minLat && latitude <= maxLat && 
+            longitude >= minLon && longitude <= maxLon) {
+            return zoneName;
+        }
+    }
+    return null;
 }
+
 
 export default function DashboardPage() {
     const [nomorLambung, setNomorLambung] = useState('MEMUAT...');
     const [statusMessage, setStatusMessage] = useState('Menginisialisasi tracking...');
     const [isTracking, setIsTracking] = useState(true);
 
+    
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const noLambungFromUrl = params.get('nomor_lambung');
@@ -35,8 +52,9 @@ export default function DashboardPage() {
         const watchId = navigator.geolocation.watchPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
+                const zone = detectZone(latitude, longitude);
 
-                if (isInsideArea(latitude, longitude)) {
+                if (zone) {
                     setStatusMessage(`Lokasi berhasil dilacak di dalam TPA.`);
                     setIsTracking(true);
 
@@ -45,6 +63,7 @@ export default function DashboardPage() {
                             no_lambung: noLambungFromUrl,
                             latitude: latitude,
                             longitude: longitude,
+                            zone: zone,
                         })
                         .catch((err) => {
                             console.error('Gagal mengirim lokasi:', err);

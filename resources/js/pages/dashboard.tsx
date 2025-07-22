@@ -11,8 +11,7 @@ import { type BreadcrumbItem, PageProps, Timbangan } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import ProgressBar from '@/components/ProgressBar';
-import { RecycleIcon } from 'lucide-react';
+import ZoneStats from '@/components/zone-stats';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -365,23 +364,6 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Netto calculation preview */}
-                        {entryMode === 'keluar' && data.berat_keluar && lastEntry && (
-                            <div className="mx-2 mb-2 grid md:grid-cols-2">
-                                <div className="flex items-center space-x-2">
-                                    <Label>Netto (Preview)</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <Input
-                                        type="text"
-                                        disabled
-                                        value={`${Number(lastEntry.berat_masuk) - Number(data.berat_keluar)} kg`}
-                                        className="bg-gray-50 dark:bg-gray-800"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
                         <div className="mx-2 mt-4 flex justify-end">
                             <Button type="submit" disabled={processing}>
                                 {entryMode === 'masuk' ? 'Simpan' : 'Update'}
@@ -403,40 +385,7 @@ export default function Dashboard() {
                         </Card>
                         <h4 className="mb-2 mt-4 font-semibold">Jumlah Truk</h4>
                         <div className='items-center justify-between mb-4 gap-4'>
-                            <Card>
-                                <div className="flex flex-col gap-2 pr-4 pl-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <RecycleIcon className="w-4 h-4 text-blue-600" />
-                                            </div>
-                                            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Sorting Zone</span>
-                                        </div>
-                                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">153/200</span>
-                                    </div>
-                                    <ProgressBar value={(153 / 200) * 100} />
-                                </div>
-                            </Card>
-                            <Card>
-                                <div className="flex flex-col gap-2 pr-4 pl-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Composting Zone</span>
-                                        <span className="text-xl font-bold">
-                                            {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Card>
-                            <Card>
-                                <div className="flex flex-col gap-2 pr-4 pl-4">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-gray-600 dark:text-gray-300">Sanitary Landfill</span>
-                                        <span className="text-xl font-bold">
-                                            {todayStats ? `${todayStats.total_netto_today.toFixed(2)} ton` : 'Loading...'}
-                                        </span>
-                                    </div>
-                                </div>
-                            </Card>
+                            <ZoneStats></ZoneStats>
                         </div>
                         
                     </div>

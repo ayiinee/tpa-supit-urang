@@ -16,5 +16,6 @@ class Tracking extends Model
         'latitude',
         'longitude',
         'created_at',
+        'zone', // tambahkan kolom zona
     ];
 }

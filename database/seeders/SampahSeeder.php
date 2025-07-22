@@ -10,9 +10,9 @@ class SampahSeeder extends Seeder
     public function run(): void
     {
         DB::table('sampah')->insert([
-            ['jenis_sampah' => 'Organik', 'created_at' => now(), 'updated_at' => now()],
-            ['jenis_sampah' => 'Anorganik', 'created_at' => now(), 'updated_at' => now()],
-            ['jenis_sampah' => 'B3', 'created_at' => now(), 'updated_at' => now()],
+            ['jenis_sampah' => 'SAMPAH ORGANIK - COMPOSTING', 'created_at' => now(), 'updated_at' => now()],
+            ['jenis_sampah' => 'SAMPAH ANORGANIK - SORTING', 'created_at' => now(), 'updated_at' => now()],
+            ['jenis_sampah' => 'SAMPAH CAMPUR - LANDFILL', 'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }

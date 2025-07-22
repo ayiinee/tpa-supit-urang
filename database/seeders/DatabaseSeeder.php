@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             TrukSeeder::class,
             TimbanganSeeder::class,
+            ZoneCapacitiesSeeder::class, 
         ]);
 
         Schema::enableForeignKeyConstraints();

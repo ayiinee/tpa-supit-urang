@@ -3,12 +3,13 @@ import React from "react";
 
 interface ProgressBarProps {
   value: number;
+  className?: string; // ← tambahkan dukungan untuk className opsional
 }
 
-export default function ProgressBar({ value }: ProgressBarProps) {
+export default function ProgressBar({ value, className }: ProgressBarProps) {
   return (
     <Progress.Root
-      className="relative overflow-hidden bg-gray-200 rounded-full w-full h-2"
+      className={`relative overflow-hidden bg-gray-200 rounded-full w-full h-2 ${className || ''}`}
       value={value}
     >
       <Progress.Indicator
