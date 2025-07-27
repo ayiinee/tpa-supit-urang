@@ -25,7 +25,7 @@ class RealtimeController extends Controller
 
     public function getAvailablePorts()
     {
-        $response = Http::get('http://localhost:5001/api/available-ports');
+        $response = Http::get('http://localhost:5000/api/available-ports');
 
         if ($response->successful()) {
             return response()->json($response->json());
@@ -42,7 +42,7 @@ class RealtimeController extends Controller
         ]);
         Log::info('Set ports request:', $validated);
 
-        $response = Http::post('http://localhost:5001/api/start-listener', $validated);
+        $response = Http::post('http://localhost:5000/api/start-listener', $validated);
 
         if ($response->successful()) {
             return response()->json(['status' => 'success']);

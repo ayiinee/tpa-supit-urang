@@ -1,4 +1,6 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, PageProps } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { FormEventHandler, useState } from 'react';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Data Supplier',
@@ -17,7 +19,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Supplier() {
     const { suppliers } = usePage<PageProps>().props;
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, delete: destroy, processing, errors, reset, clearErrors,
+    } = useForm({
         kode_supplier: '',
         nama_supplier: '',
         alamat: '',
@@ -25,7 +28,6 @@ export default function Supplier() {
 
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState<number | null>(null);
-
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -38,12 +40,38 @@ export default function Supplier() {
                     setEditId(null);
                 },
             });
-        } else{
-                post(route('supplier.store'), {
+        } else {
+            post(route('supplier.store'), {
                 preserveScroll: true,
                 onSuccess: () => reset(),
             });
         }
+    };
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [deleteName, setDeleteName] = useState<string | null>(null);
+
+    const deleteUser: FormEventHandler = (e) => {
+        e.preventDefault();
+
+        if (deleteId !== null) {
+            destroy(route('supplier.destroy', deleteId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    closeModal();
+                    setShowDeleteModal(false);
+                    setDeleteId(null);
+                    setDeleteName(null);
+                },
+                onFinish: () => reset(),
+            });
+        }
+    };
+
+    const closeModal = () => {
+        clearErrors();
+        reset();
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -54,40 +82,35 @@ export default function Supplier() {
                         onSubmit={handleSubmit}
                         className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                     >
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="kode_supplier">Kode Supplier</Label>
+                        <div className="grid grid-cols-2 items-start gap-x-4 gap-y-4">
+                            {/* Kode Supplier */}
+                            <Label htmlFor="kode_supplier" className="mt-2">
+                                Kode Supplier
+                            </Label>
+                            <div>
+                                <Input id="kode_supplier" value={data.kode_supplier} onChange={(e) => setData('kode_supplier', e.target.value)} />
+                                <InputError message={errors.kode_supplier} className="mt-1" />
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <Input
-                                    id="kode_supplier"
-                                    type="text"
-                                    value={data.kode_supplier}
-                                    onChange={(e) => setData('kode_supplier', e.target.value)}
-                                />
+
+                            {/* Nama Supplier */}
+                            <Label htmlFor="nama_supplier" className="mt-2">
+                                Nama Supplier
+                            </Label>
+                            <div>
+                                <Input id="nama_supplier" value={data.nama_supplier} onChange={(e) => setData('nama_supplier', e.target.value)} />
+                                <InputError message={errors.nama_supplier} className="mt-1" />
                             </div>
-                        </div>
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="nama_supplier">Nama Supplier</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Input
-                                    id="nama_supplier"
-                                    type="text"
-                                    value={data.nama_supplier}
-                                    onChange={(e) => setData('nama_supplier', e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="alamat">Alamat</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+
+                            {/* Alamat */}
+                            <Label htmlFor="alamat" className="mt-2">
+                                Alamat
+                            </Label>
+                            <div>
                                 <Textarea id="alamat" value={data.alamat} onChange={(e) => setData('alamat', e.target.value)} />
+                                <InputError message={errors.alamat} className="mt-1" />
                             </div>
                         </div>
+
                         <div className="mx-2 mt-4 flex justify-end">
                             <Button type="submit" disabled={processing}>
                                 Simpan
@@ -115,7 +138,8 @@ export default function Supplier() {
                                         <TableCell>{item.alamat}</TableCell>
                                         <TableCell>
                                             <Button
-                                                variant="secondary"
+                                                variant="outline"
+                                                className="mr-2"
                                                 size="sm"
                                                 onClick={() => {
                                                     setData({
@@ -126,20 +150,42 @@ export default function Supplier() {
                                                     setIsEditing(true);
                                                     setEditId(item.id);
                                                 }}
-                                            >Edit
-
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => {
-                                                    if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-                                                        router.delete(route('supplier.destroy', item.id));
-                                                    }
-                                                }}
                                             >
-                                                Hapus
+                                                Edit
                                             </Button>
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setDeleteId(item.id);
+                                                            setDeleteName(item.nama_supplier);
+                                                            setShowDeleteModal(true);
+                                                        }}
+                                                    >
+                                                        Hapus
+                                                    </Button>
+                                                </DialogTrigger>
+
+                                                <DialogContent>
+                                                    <DialogTitle>Konfirmasi Hapus</DialogTitle>
+                                                    <DialogDescription>
+                                                        Apakah kamu yakin ingin menghapus supplier <strong>{deleteName}</strong>? Tindakan ini tidak
+                                                        dapat dibatalkan.
+                                                    </DialogDescription>
+                                                    <DialogFooter className="gap-2">
+                                                        <DialogClose asChild>
+                                                            <Button variant="outline" onClick={() => setShowDeleteModal(false)}>
+                                                                Batal
+                                                            </Button>
+                                                        </DialogClose>
+                                                        <Button variant="destructive" onClick={deleteUser}>
+                                                            Hapus
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
+                                            </Dialog>
                                         </TableCell>
                                     </TableRow>
                                 ))}

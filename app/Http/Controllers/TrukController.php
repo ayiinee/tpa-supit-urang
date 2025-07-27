@@ -25,6 +25,14 @@ class TrukController extends Controller
             'nama_supir' => 'required|string|max:255',
             'kode_supplier' => 'required|string|exists:supplier,kode_supplier',
             'barang' => 'required|integer|exists:sampah,id',
+        ], [
+            'no_lambung.required' => 'Wajib diisi.',
+            'no_polisi.required' => 'Wajib diisi.',
+            'nama_supir.required' => 'Wajib diisi.',
+            'kode_supplier.required' => 'Wajib diisi.',
+            'barang.required' => 'Wajib diisi.',
+            'kode_supplier.exists' => 'Kode supplier tidak ditemukan.',
+            'barang.exists' => 'Barang tidak ditemukan.',
         ]);
 
 
@@ -44,6 +52,14 @@ class TrukController extends Controller
             'kode_supplier' => 'required|string|max:255',
             'barang' => 'required|string|max:255',
             'nama_supir' => 'required|string|max:255',
+        ], [
+            'no_lambung.required' => 'Wajib diisi.',
+            'no_polisi.required' => 'Wajib diisi.',
+            'nama_supir.required' => 'Wajib diisi.',
+            'kode_supplier.required' => 'Wajib diisi.',
+            'barang.required' => 'Wajib diisi.',
+            'kode_supplier.exists' => 'Kode supplier tidak ditemukan.',
+            'barang.exists' => 'Barang tidak ditemukan.',
         ]);
 
         $truk->update($request->all());

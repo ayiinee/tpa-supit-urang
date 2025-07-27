@@ -21,6 +21,10 @@ class SupplierController extends Controller
             'kode_supplier' => 'required|string|max:255',
             'nama_supplier' => 'required|string|max:255',
             'alamat' => 'required|string|max:255',
+        ], [
+            'kode_supplier.required' => 'Wajib diisi.',
+            'nama_supplier.required' => 'Wajib diisi.',
+            'alamat.required' => 'Wajib diisi.',
         ]);
 
         Supplier::create($request->all());
@@ -36,7 +40,12 @@ class SupplierController extends Controller
             'kode_supplier' => 'required|string|max:255',
             'nama_supplier' => 'required|string|max:255',
             'alamat' => 'required|string|max:255',
-        ]);
+        ], [
+            'kode_supplier.required' => 'Wajib diisi.',
+            'nama_supplier.required' => 'Wajib diisi.',
+            'alamat.required' => 'Wajib diisi.',
+        ]
+    );
 
         $supplier->update($request->all());
 

@@ -54,23 +54,31 @@ class TrackingController extends Controller
     }
 
     public function getZoneStats()
-{
-    $zoneStats = DB::table('zone_capacities as zc')
-        ->leftJoin(DB::raw('(
-            SELECT zone, COUNT(DISTINCT no_lambung) as current_trucks
-            FROM trackings 
-            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
-            AND zone IS NOT NULL
-            GROUP BY zone
-        ) as t'), 'zc.zone_name', '=', 't.zone')
-        ->select(
-            'zc.zone_name',
-            'zc.max_capacity',
-            DB::raw('COALESCE(t.current_trucks, 0) as current_count')
-        )
-        ->get();
+    {
+        $zoneStats = DB::table('zone_capacities as zc')
+            ->leftJoin(DB::raw('(
+                SELECT zone, COUNT(DISTINCT no_lambung) as current_trucks
+                FROM trackings 
+                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+                AND zone IS NOT NULL
+                GROUP BY zone
+            ) as t'), 'zc.zone_name', '=', 't.zone')
+            ->select(
+                'zc.zone_name',
+                'zc.max_capacity',
+                DB::raw('COALESCE(t.current_trucks, 0) as current_count')
+            )
+            ->get();
 
-    return response()->json($zoneStats);
-}
+        return response()->json($zoneStats);
+    }
+
+    public function deleteOldTrackings()
+    {
+        // Hapus data tracking yang lebih dari 1 bulan
+        Tracking::where('created_at', '<', now()->subDays(7))->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'Old trackings deleted.']);
+    }
 
 }

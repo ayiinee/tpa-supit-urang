@@ -81,7 +81,8 @@ export default function Sampah() {
                                     <TableCell>{item.jenis_sampah}</TableCell>
                                     <TableCell>
                                         <Button
-                                            variant="secondary"
+                                            variant="outline"
+                                            className='mr-2'
                                             size="sm"
                                             onClick={() => {
                                                 setData({

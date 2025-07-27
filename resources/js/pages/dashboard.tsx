@@ -1,4 +1,5 @@
 import CCTV from '@/components/cctv';
+import InputError from '@/components/input-error';
 import TruckMap from '@/components/TruckMap';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -6,12 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import ZoneStats from '@/components/zone-stats';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem, PageProps, Timbangan } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import ZoneStats from '@/components/zone-stats';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -72,38 +73,38 @@ export default function Dashboard() {
     }, []);
 
     useEffect(() => {
-    const interval = setInterval(async () => {
-        try {
-            const res = await axios.get('/api/external/berat-terakhir');
-            const { no_polisi, berat } = res.data;
+        const interval = setInterval(async () => {
+            try {
+                const res = await axios.get('/api/external/berat-terakhir');
+                const { no_polisi, berat } = res.data;
 
-            if (no_polisi && berat) {
-                setData((prev) => ({
-                    ...prev,
-                    no_polisi,
-                }));
-
-                handlePolisiChange(no_polisi); // trigger autofill lainnya
-
-                if (entryMode === 'masuk') {
+                if (no_polisi && berat) {
                     setData((prev) => ({
                         ...prev,
-                        berat_masuk: String(berat),
+                        no_polisi,
                     }));
-                } else {
-                    setData((prev) => ({
-                        ...prev,
-                        berat_keluar: String(berat),
-                    }));
+
+                    handlePolisiChange(no_polisi); // trigger autofill lainnya
+
+                    if (entryMode === 'masuk') {
+                        setData((prev) => ({
+                            ...prev,
+                            berat_masuk: String(berat),
+                        }));
+                    } else {
+                        setData((prev) => ({
+                            ...prev,
+                            berat_keluar: String(berat),
+                        }));
+                    }
                 }
+            } catch (err) {
+                console.error('Gagal fetch berat dari eksternal:', err);
             }
-        } catch (err) {
-            console.error('Gagal fetch berat dari eksternal:', err);
-        }
-    }, 2000); // polling tiap 2 detik
+        }, 2000); // polling tiap 2 detik
 
-    return () => clearInterval(interval);
-}, [entryMode]);
+        return () => clearInterval(interval);
+    }, [entryMode]);
 
     useEffect(() => {
         if (!data.no_polisi) {
@@ -238,16 +239,16 @@ export default function Dashboard() {
                         onSubmit={handleSubmit}
                         className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border"
                     >
-                        <div className="rounded-xl border border-dashed p-4 text-center shadow-sm">
+                        <div className="rounded-xl border border-dashed p-4 mb-4 text-center shadow-sm">
                             <p className="text-sm text-muted-foreground">Berat Real-Time</p>
                             <p className="text-3xl font-bold text-green-600">{liveWeight} kg</p>
                         </div>
 
-                        <div className="m-4 mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="no_tiket">No. Tiket</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+                        <div className="mx-2 grid grid-cols-2 items-start gap-y-2">
+                            <Label htmlFor="no_tiket" className="mt-2">
+                                No. Tiket
+                            </Label>
+                            <div>
                                 <Input
                                     id="no_tiket"
                                     type="text"
@@ -255,13 +256,11 @@ export default function Dashboard() {
                                     value={entryMode === 'keluar' && lastEntry ? lastEntry.no_tiket : newTicketNumber}
                                 />
                             </div>
-                        </div>
 
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="no_polisi">No. Polisi</Label>
-                            </div>
-                            <div className="flex items-center">
+                            <Label htmlFor="no_polisi" className="mt-2">
+                                No. Polisi
+                            </Label>
+                            <div>
                                 <Select value={data.no_polisi} onValueChange={handlePolisiChange} disabled={entryMode === 'keluar'}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Pilih no. polisi" />
@@ -274,14 +273,13 @@ export default function Dashboard() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                <InputError message={errors.no_polisi} className="mt-1" />
                             </div>
-                        </div>
-                        
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="no_lambung">No. Lambung</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+
+                            <Label htmlFor="no_lambung" className="mt-2">
+                                No. Lambung
+                            </Label>
+                            <div>
                                 <Input
                                     id="no_lambung"
                                     type="text"
@@ -289,15 +287,13 @@ export default function Dashboard() {
                                     onChange={(e) => setData('no_lambung', e.target.value)}
                                     disabled={entryMode === 'keluar'}
                                 />
+                                <InputError message={errors.no_lambung} className="mt-1" />
                             </div>
-                        </div>
 
-
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="nama_supir">Nama Supir</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+                            <Label htmlFor="nama_supir" className="mt-2">
+                                Nama Supir
+                            </Label>
+                            <div>
                                 <Input
                                     id="nama_supir"
                                     type="text"
@@ -305,14 +301,13 @@ export default function Dashboard() {
                                     onChange={(e) => setData('nama_supir', e.target.value)}
                                     disabled={entryMode === 'keluar'}
                                 />
+                                <InputError message={errors.nama_supir} className="mt-1" />
                             </div>
-                        </div>
 
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="id_sampah">Jenis Sampah</Label>
-                            </div>
-                            <div className="flex items-center">
+                            <Label htmlFor="id_sampah" className="mt-2">
+                                Jenis Sampah
+                            </Label>
+                            <div>
                                 <Select
                                     value={data.id_sampah}
                                     onValueChange={(value) => setData('id_sampah', value)}
@@ -329,14 +324,13 @@ export default function Dashboard() {
                                         ))}
                                     </SelectContent>
                                 </Select>
+                                <InputError message={errors.id_sampah} className="mt-1" />
                             </div>
-                        </div>
 
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="berat_masuk">Berat Masuk</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+                            <Label htmlFor="berat_masuk" className="mt-2">
+                                Berat Masuk
+                            </Label>
+                            <div>
                                 <Input
                                     id="berat_masuk"
                                     type="number"
@@ -345,14 +339,13 @@ export default function Dashboard() {
                                     disabled={entryMode === 'keluar'}
                                     className={entryMode === 'masuk' ? 'ring-2 ring-green-500' : ''}
                                 />
+                                <InputError message={errors.berat_masuk} className="mt-1" />
                             </div>
-                        </div>
 
-                        <div className="mx-2 mb-2 grid md:grid-cols-2">
-                            <div className="flex items-center space-x-2">
-                                <Label htmlFor="berat_keluar">Berat Keluar</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
+                            <Label htmlFor="berat_keluar" className="mt-2">
+                                Berat Keluar
+                            </Label>
+                            <div>
                                 <Input
                                     id="berat_keluar"
                                     type="number"
@@ -361,6 +354,7 @@ export default function Dashboard() {
                                     disabled={entryMode === 'masuk'}
                                     className={entryMode === 'keluar' ? 'ring-2 ring-orange-500' : ''}
                                 />
+                                <InputError message={errors.berat_keluar} className="mt-1" />
                             </div>
                         </div>
 
@@ -374,7 +368,7 @@ export default function Dashboard() {
                     <div className="relative h-[500px] overflow-hidden rounded-xl border border-sidebar-border/70 p-4 dark:border-sidebar-border">
                         <h4 className="mb-2 font-semibold">Info Statistik</h4>
                         <Card>
-                            <div className="flex flex-col  pr-4 pl-4">
+                            <div className="flex flex-col pr-4 pl-4">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-gray-600 dark:text-gray-300">Jumlah Sampah</span>
                                     <span className="text-xl font-bold">
@@ -383,20 +377,18 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </Card>
-                        <h4 className="mb-2 mt-4 font-semibold">Jumlah Truk</h4>
-                        <div className='items-center justify-between mb-4 gap-4'>
+                        <h4 className="mt-4 mb-2 font-semibold">Jumlah Truk</h4>
+                        <div className="mb-4 items-center justify-between gap-4">
                             <ZoneStats></ZoneStats>
                         </div>
-                        
                     </div>
                     <div>
-                        <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border mb-4">
+                        <div className="relative mb-4 aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <CCTV src="192.168.0.2" />
                         </div>
                         <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
                             <TruckMap trucks={truckPositions} />
                         </div>
-
                     </div>
                 </div>
 
@@ -406,12 +398,12 @@ export default function Dashboard() {
                             <TableRow>
                                 <TableHead>No. Tiket</TableHead>
                                 <TableHead>Tanggal</TableHead>
-                                <TableHead className='whitespace-nowrap'>No. Polisi</TableHead>
-                                <TableHead className='whitespace-nowrap'>No. Lambung</TableHead>
-                                <TableHead className='whitespace-nowrap'>Nama Supir</TableHead>
+                                <TableHead className="whitespace-nowrap">No. Polisi</TableHead>
+                                <TableHead className="whitespace-nowrap">No. Lambung</TableHead>
+                                <TableHead className="whitespace-nowrap">Nama Supir</TableHead>
                                 <TableHead>Jenis Sampah</TableHead>
-                                <TableHead className='whitespace-nowrap'>Berat Masuk</TableHead>
-                                <TableHead className='whitespace-nowrap'>Berat Keluar</TableHead>
+                                <TableHead className="whitespace-nowrap">Berat Masuk</TableHead>
+                                <TableHead className="whitespace-nowrap">Berat Keluar</TableHead>
                                 <TableHead>Netto</TableHead>
                                 <TableHead>Action</TableHead>
                             </TableRow>
@@ -424,13 +416,14 @@ export default function Dashboard() {
                                     <TableCell>{item.no_polisi}</TableCell>
                                     <TableCell>{item.no_lambung || '-'}</TableCell>
                                     <TableCell>{item.nama_supir}</TableCell>
-                                    <TableCell className='whitespace-normal'>{item.sampah?.jenis_sampah}</TableCell>
+                                    <TableCell className="whitespace-normal">{item.sampah?.jenis_sampah}</TableCell>
                                     <TableCell>{item.berat_masuk}</TableCell>
                                     <TableCell>{item.berat_keluar ?? '-'}</TableCell>
                                     <TableCell>{item.netto ?? '-'}</TableCell>
-                                    <TableCell className='whitespace-nowrap'>
+                                    <TableCell className="whitespace-nowrap">
                                         <Button
                                             variant="outline"
+                                            className='mr-2'
                                             size="sm"
                                             onClick={() => {
                                                 setData({
