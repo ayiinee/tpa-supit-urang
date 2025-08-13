@@ -108,7 +108,7 @@ def fifo_loop():
             sensor_name, berat = queue.get()
             print(f"[FIFO] Mengambil dari queue: {sensor_name} = {berat}")
             post_data(sensor_name, berat)
-        time.sleep(0.1)
+        time.sleep(1)
 
 # API endpoints
 
