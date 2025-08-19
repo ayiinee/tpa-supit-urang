@@ -252,7 +252,7 @@ class TimbanganController extends Controller
         // Simpan ke cache supaya bisa dibaca oleh frontend
         cache()->put('berat-terakhir', [
             'berat' => $validated['berat'],
-        ], now()->addSeconds(10)); // expired dalam 10 detik
+        ], now()->addSeconds(0.15)); // expired dalam 10 detik
 
         return response()->json(['status' => 'berhasil simpan']);
     }

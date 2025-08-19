@@ -12,7 +12,7 @@ class RealtimeController extends Controller
     public function updateBerat(Request $request)
     {
         $berat = $request->input('berat');
-        Cache::put('live-weight', $berat, now()->addSeconds(5));
+        Cache::put('live-weight', $berat, now()->addSeconds(0.15));
         return response()->json(['success' => true]);
     }
 

@@ -6,6 +6,9 @@ import threading
 import time
 from queue import Queue
 from flask import Flask, request, jsonify
+# import asyncio
+# import aiohttp
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
@@ -20,6 +23,9 @@ SERVER_URL = 'http://localhost:8000'
 API_WEIGHT = '/api/live-weight'
 HEADERS = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
+# Thread pool for async HTTP requests
+executor = ThreadPoolExecutor(max_workers=5)
+
 def scan_ports():
     ports = [port.device for port in serial.tools.list_ports.comports()]
     return ports
@@ -31,7 +37,7 @@ def read_serial_data(ser, sensor_name):
             if not data:
                 continue
 
-            print(f"[{sensor_name}] RAW repr: {repr(data)}")  # Debug untuk melihat isi mentah
+            print(f"[{sensor_name}] RAW repr: {repr(data)}")
 
             try:
                 indicator_list = re.findall(r'\D+', data)
@@ -54,64 +60,128 @@ def read_serial_data(ser, sensor_name):
                     print(f"[{sensor_name}] Add ke queue: ({sensor_name}, {value})")
                     queue.put((sensor_name, value))
 
-            except IndexError:
-                print(f"[{sensor_name}] Parsing error: {data}")
-            except ValueError as ve:
-                print(f"[{sensor_name}] ValueError saat parsing: {ve} | data: {data}")
+            except (IndexError, ValueError) as e:
+                print(f"[{sensor_name}] Parsing error: {e} | data: {data}")
 
         except Exception as e:
             print(f"[{sensor_name}] Error reading serial: {e}")
-
 
 def start_listeners(left_port):
     global ser_left, ser_right, serial_threads, fifo_thread
 
     try:
         ser_left = serial.Serial(left_port, 9600, timeout=1)
-        # ser_right = serial.Serial(right_port, 9600, timeout=1)
     except Exception as e:
         print("Failed opening serial ports:", e)
         return False
 
-    # Start FIFO thread if not already started
+    # Start optimized FIFO thread
     if fifo_thread is None or not fifo_thread.is_alive():
-        fifo_thread = threading.Thread(target=fifo_loop, daemon=True)
+        fifo_thread = threading.Thread(target=optimized_fifo_loop, daemon=True)
         fifo_thread.start()
-        print("[FIFO] FIFO thread started")
+        print("[FIFO] Optimized FIFO thread started")
 
     # Start threads
     t1 = threading.Thread(target=read_serial_data, args=(ser_left, 'LEFT'))
-    # t2 = threading.Thread(target=read_serial_data, args=(ser_right, 'RIGHT'))
     t1.daemon = True
-    # t2.daemon = True
     t1.start()
-    # t2.start()
 
     serial_threads = [t1]
     return True
 
-def post_data(sensor_name, berat):
-    payload = {
-        "sensor": sensor_name,
-        "berat": berat
-    }
-    try:
-        res = requests.post(SERVER_URL + API_WEIGHT, json=payload, headers=HEADERS, timeout=3)
-        print(f"Sent to server: {sensor_name} {berat} KG | Status: {res.status_code}")
-    except Exception as e:
-        print("Error posting data:", e)
+def post_data_async(sensor_name, berat):
+    """Non-blocking HTTP request using thread pool"""
+    def _post():
+        payload = {
+            "sensor": sensor_name,
+            "berat": berat
+        }
+        try:
+            res = requests.post(SERVER_URL + API_WEIGHT, json=payload, headers=HEADERS, timeout=2)
+            print(f"Sent to server: {sensor_name} {berat} KG | Status: {res.status_code}")
+            return True
+        except Exception as e:
+            print(f"Error posting data: {e}")
+            return False
+    
+    # Submit to thread pool (non-blocking)
+    executor.submit(_post)
 
-def fifo_loop():
-    print("[FIFO] FIFO loop dimulai")
+def optimized_fifo_loop():
+    """Optimized FIFO loop with minimal delays"""
+    print("[FIFO] Optimized FIFO loop started")
+    batch = []
+    last_send_time = time.time()
+    
+    while True:
+        # Process all available items quickly
+        items_processed = 0
+        while not queue.empty() and items_processed < 10:  # Process up to 10 items at once
+            try:
+                sensor_name, berat = queue.get_nowait()
+                print(f"[FIFO] Processing: {sensor_name} = {berat}")
+                
+                # Send immediately using async method
+                post_data_async(sensor_name, berat)
+                items_processed += 1
+                
+            except:
+                break
+        
+        if items_processed == 0:
+            # Only sleep if no items were processed
+            time.sleep(0.01)  # Much shorter sleep (10ms)
+        else:
+            # Small delay between batches to prevent overwhelming
+            time.sleep(0.001)  # 1ms delay
+
+# Alternative: Rate-limited FIFO loop
+def rate_limited_fifo_loop():
+    """Alternative: Process items with rate limiting"""
+    print("[FIFO] Rate-limited FIFO loop started")
+    last_send_time = time.time()
+    min_interval = 0.1  # Minimum 100ms between sends
+    
     while True:
         if not queue.empty():
             sensor_name, berat = queue.get()
-            print(f"[FIFO] Mengambil dari queue: {sensor_name} = {berat}")
-            post_data(sensor_name, berat)
-        time.sleep(1)
+            current_time = time.time()
+            
+            # Rate limiting: ensure minimum interval between sends
+            time_since_last = current_time - last_send_time
+            if time_since_last < min_interval:
+                time.sleep(min_interval - time_since_last)
+            
+            print(f"[FIFO] Processing: {sensor_name} = {berat}")
+            post_data_async(sensor_name, berat)
+            last_send_time = time.time()
+        else:
+            time.sleep(0.01)  # Short sleep when queue is empty
 
-# API endpoints
+# Data filtering to reduce noise
+def filtered_fifo_loop():
+    """FIFO loop with data filtering to reduce duplicate/noise data"""
+    print("[FIFO] Filtered FIFO loop started")
+    last_values = {}  # Store last value for each sensor
+    threshold = 5  # Only send if change is > 5 KG
+    
+    while True:
+        if not queue.empty():
+            sensor_name, berat = queue.get()
+            
+            # Check if value changed significantly
+            if sensor_name in last_values:
+                if abs(berat - last_values[sensor_name]) < threshold:
+                    print(f"[FIFO] Skipping {sensor_name}={berat} (too similar to {last_values[sensor_name]})")
+                    continue
+            
+            print(f"[FIFO] Processing: {sensor_name} = {berat}")
+            post_data_async(sensor_name, berat)
+            last_values[sensor_name] = berat
+        else:
+            time.sleep(0.01)
 
+# API endpoints remain the same
 @app.route('/api/available-ports', methods=['GET'])
 def api_available_ports():
     ports = scan_ports()
@@ -121,11 +191,9 @@ def api_available_ports():
 def api_start_listener():
     data = request.get_json()
     left = data.get("left")
-    # right = data.get("right")
 
     if left:
         selected_ports["left"] = left
-        # selected_ports["right"] = right
         success = start_listeners(left)
         if success:
             return jsonify({"status": "ok"})
@@ -135,5 +203,4 @@ def api_start_listener():
         return jsonify({"status": "missing ports"}), 400
 
 if __name__ == '__main__':
-    # Start Flask server
     app.run(host="0.0.0.0", port=5001, debug=True)

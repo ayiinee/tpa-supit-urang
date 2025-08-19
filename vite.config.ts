@@ -22,4 +22,11 @@ export default defineConfig({
             'ziggy-js': resolve(__dirname, 'vendor/tightenco/ziggy'),
         },
     },
+    server: {
+        host: '0.0.0.0',   // biar bisa diakses dari device lain
+        port: 3000,
+        hmr: {
+            host: '192.168.1.19',  // IP LAN kamu
+        },
+    },
 });
