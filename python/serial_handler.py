@@ -6,7 +6,7 @@ import threading
 import time
 from queue import Queue
 from flask import Flask, request, jsonify
-# import asyncio
+import asyncio
 # import aiohttp
 from concurrent.futures import ThreadPoolExecutor
 
@@ -75,11 +75,11 @@ def start_listeners(left_port):
         print("Failed opening serial ports:", e)
         return False
 
-    # Start optimized FIFO thread
+    # Start robust FIFO thread with error handling
     if fifo_thread is None or not fifo_thread.is_alive():
-        fifo_thread = threading.Thread(target=optimized_fifo_loop, daemon=True)
+        fifo_thread = threading.Thread(target=robust_fifo_loop, daemon=True)
         fifo_thread.start()
-        print("[FIFO] Optimized FIFO thread started")
+        print("[FIFO] Robust FIFO thread started")
 
     # Start threads
     t1 = threading.Thread(target=read_serial_data, args=(ser_left, 'LEFT'))
@@ -90,50 +90,118 @@ def start_listeners(left_port):
     return True
 
 def post_data_async(sensor_name, berat):
-    """Non-blocking HTTP request using thread pool"""
+    """Non-blocking HTTP request using thread pool with retry logic"""
     def _post():
         payload = {
             "sensor": sensor_name,
             "berat": berat
         }
-        try:
-            res = requests.post(SERVER_URL + API_WEIGHT, json=payload, headers=HEADERS, timeout=2)
-            print(f"Sent to server: {sensor_name} {berat} KG | Status: {res.status_code}")
-            return True
-        except Exception as e:
-            print(f"Error posting data: {e}")
-            return False
+        
+        max_retries = 3
+        backoff_delay = 0.5
+        
+        for attempt in range(max_retries):
+            try:
+                res = requests.post(
+                    SERVER_URL + API_WEIGHT, 
+                    json=payload, 
+                    headers=HEADERS, 
+                    timeout=5  # Increased timeout
+                )
+                if res.status_code == 200:
+                    print(f"✓ Sent to server: {sensor_name} {berat} KG | Status: {res.status_code}")
+                    return True
+                else:
+                    print(f"⚠ Server responded with status {res.status_code}: {sensor_name} {berat} KG")
+                    
+            except requests.exceptions.Timeout:
+                print(f"⏰ Timeout (attempt {attempt + 1}/{max_retries}): {sensor_name} {berat} KG")
+                if attempt < max_retries - 1:
+                    time.sleep(backoff_delay * (2 ** attempt))  # Exponential backoff
+                    
+            except requests.exceptions.ConnectionError:
+                print(f"🔌 Connection error (attempt {attempt + 1}/{max_retries}): Server might be down")
+                if attempt < max_retries - 1:
+                    time.sleep(backoff_delay * (2 ** attempt))
+                    
+            except Exception as e:
+                print(f"❌ Unexpected error (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(backoff_delay)
+        
+        print(f"💀 Failed to send after {max_retries} attempts: {sensor_name} {berat} KG")
+        return False
     
     # Submit to thread pool (non-blocking)
     executor.submit(_post)
 
-def optimized_fifo_loop():
-    """Optimized FIFO loop with minimal delays"""
-    print("[FIFO] Optimized FIFO loop started")
-    batch = []
-    last_send_time = time.time()
+# Enhanced FIFO with connection monitoring and buffering
+def robust_fifo_loop():
+    """FIFO loop with connection monitoring and offline buffering"""
+    print("[FIFO] Robust FIFO loop started")
+    offline_buffer = []
+    server_available = True
+    last_health_check = time.time()
+    health_check_interval = 30  # Check server health every 30 seconds
+    
+    def check_server_health():
+        try:
+            res = requests.get(f"{SERVER_URL}/health", timeout=3)  # Assuming health endpoint
+            return res.status_code == 200
+        except:
+            try:
+                # Fallback: try the main endpoint
+                res = requests.get(SERVER_URL, timeout=3)
+                return res.status_code in [200, 404]  # 404 is still a response
+            except:
+                return False
     
     while True:
-        # Process all available items quickly
+        current_time = time.time()
+        
+        # Periodic server health check
+        if current_time - last_health_check > health_check_interval:
+            server_available = check_server_health()
+            print(f"🏥 Server health check: {'✓ Available' if server_available else '❌ Unavailable'}")
+            last_health_check = current_time
+        
+        # Process queue items
         items_processed = 0
-        while not queue.empty() and items_processed < 10:  # Process up to 10 items at once
+        while not queue.empty() and items_processed < 5:  # Process fewer items if server is slow
             try:
                 sensor_name, berat = queue.get_nowait()
-                print(f"[FIFO] Processing: {sensor_name} = {berat}")
                 
-                # Send immediately using async method
-                post_data_async(sensor_name, berat)
+                if server_available:
+                    # Send data immediately
+                    print(f"[FIFO] Processing: {sensor_name} = {berat}")
+                    post_data_async(sensor_name, berat)
+                else:
+                    # Buffer data for later when server is back
+                    offline_buffer.append((sensor_name, berat, current_time))
+                    print(f"📦 Buffered offline: {sensor_name} = {berat} (buffer size: {len(offline_buffer)})")
+                    
+                    # Limit buffer size to prevent memory issues
+                    if len(offline_buffer) > 1000:
+                        offline_buffer.pop(0)  # Remove oldest item
+                        print("⚠ Buffer full, removing oldest data")
+                
                 items_processed += 1
                 
             except:
                 break
         
+        # Try to send buffered data when server comes back online
+        if server_available and offline_buffer:
+            print(f"📤 Server back online! Sending {len(offline_buffer)} buffered items...")
+            for sensor_name, berat, timestamp in offline_buffer[:10]:  # Send max 10 at a time
+                post_data_async(sensor_name, berat)
+            offline_buffer = offline_buffer[10:]  # Remove sent items
+        
+        # Adaptive sleep based on activity
         if items_processed == 0:
-            # Only sleep if no items were processed
-            time.sleep(0.01)  # Much shorter sleep (10ms)
+            time.sleep(0.05)  # Longer sleep when idle
         else:
-            # Small delay between batches to prevent overwhelming
-            time.sleep(0.001)  # 1ms delay
+            time.sleep(0.01)  # Short sleep when busy
 
 # Alternative: Rate-limited FIFO loop
 def rate_limited_fifo_loop():
