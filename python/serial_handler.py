@@ -19,7 +19,7 @@ ser_left = None
 ser_right = None
 selected_ports = {"left": None, "right": None}
 
-SERVER_URL = 'http://localhost:8000'
+SERVER_URL = 'http://192.168.0.116:8000'
 API_WEIGHT = '/api/live-weight'
 HEADERS = {'Content-Type': 'application/json', 'Accept': 'application/json'}
 
