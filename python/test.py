@@ -3,7 +3,7 @@ import time
 import random
 
 # Ganti ini dengan COM port virtual transmitter kamu
-PORT = 'COM4'
+PORT = 'COM2'
 BAUDRATE = 9600
 
 try:
