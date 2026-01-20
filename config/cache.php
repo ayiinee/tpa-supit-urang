@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => env('CACHE_STORE', 'array'), // OPTIMIZED: Use array cache for ultra-fast real-time data
 
     /*
     |--------------------------------------------------------------------------

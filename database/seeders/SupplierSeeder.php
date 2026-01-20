@@ -2,24 +2,39 @@
 
 namespace Database\Seeders;
 
-use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Supplier;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class SupplierSeeder extends Seeder
 {
     public function run(): void
     {
-        Supplier::create([
-            'kode_supplier' => 'SUP01',
-            'nama_supplier' => 'TPS Desa Maju',
-            'alamat'        => 'Jl. Raya Maju No. 1',
-        ]);
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        Supplier::create([
-            'kode_supplier' => 'SUP02',
-            'nama_supplier' => 'TPS Kecamatan Jaya',
-            'alamat'        => 'Jl. Raya Jaya No. 2',
-        ]);
+        DB::table('supplier')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $path = storage_path('db/SUPP.xlsx');
+
+        // Lewati 3 baris pertama (header di baris ke-4)
+        $rows = (new FastExcel)->withoutHeaders()->import($path)->skip(3);
+
+        $counter = 1;
+        foreach ($rows as $line) {
+            // Pastikan kolom sesuai urutan di Excel
+            $namaSupplier = $line[1] ?? null;
+            $alamat = $line[2] ?? null;
+
+            if (!$namaSupplier) continue;
+
+            Supplier::create([
+                'kode_supplier' => 'SUP' . str_pad($counter, 3, '0', STR_PAD_LEFT),
+                'nama_supplier' => $namaSupplier,
+                'alamat'        => $alamat,
+            ]);
+
+            $counter++;
+        }
     }
 }

@@ -83,6 +83,7 @@ export interface Supplier {
 
 export interface PageProps extends InertiaPageProps {
     newTicketNumber?: string;
+    cctvIp?: string;
     trucks: Truck[];
     sampahs: Sampah[];
     suppliers: Supplier[];

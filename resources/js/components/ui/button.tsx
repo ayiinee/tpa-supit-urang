@@ -1,29 +1,57 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
+// 💡 warna utama sidebar-mu
+const primaryColor = "oklch(0.4963 0.1135 260.06)";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[oklch(0.4963_0.1135_260.06)] [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
-        outline:
-          "border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        // === PRIMARY / DEFAULT BUTTON ===
+        default: cn(
+          "bg-[oklch(0.4963_0.1135_260.06)] text-white shadow-sm",
+          "hover:bg-[oklch(0.4863_0.1135_260.06)]",
+          "active:scale-[0.98]"
+        ),
+
+        // === DESTRUCTIVE / DANGER BUTTON ===
+        destructive: cn(
+          "bg-red-100 text-red-700 hover:bg-red-200",
+          "dark:bg-red-800/40 dark:text-red-200 dark:hover:bg-red-800/60"
+        ),
+
+        // === OUTLINE BUTTON ===
+        outline: cn(
+          "border border-gray-300 bg-white text-gray-800 shadow-sm",
+          "hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+        ),
+
+        // === SECONDARY BUTTON ===
+        secondary: cn(
+          "bg-gray-100 text-gray-800 hover:bg-gray-200",
+          "dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+        ),
+
+        // === GHOST BUTTON (transparent) ===
+        ghost: cn(
+          "bg-transparent text-[oklch(0.4963_0.1135_260.06)] hover:bg-[oklch(0.4963_0.1135_260.06)/10]",
+          "dark:hover:bg-[oklch(0.4963_0.1135_260.06)/20]"
+        ),
+
+        // === LINK STYLE BUTTON ===
+        link: cn(
+          "text-[oklch(0.4963_0.1135_260.06)] underline-offset-4 hover:underline"
+        ),
       },
+
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        default: "h-9 px-4 py-2",
+        sm: "h-8 px-3 text-xs",
+        lg: "h-10 px-6 text-base",
         icon: "size-9",
       },
     },
@@ -32,7 +60,7 @@ const buttonVariants = cva(
       size: "default",
     },
   }
-)
+);
 
 function Button({
   className,
@@ -42,17 +70,16 @@ function Button({
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
   }) {
-  const Comp = asChild ? Slot : "button"
-
+  const Comp = asChild ? Slot : "button";
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

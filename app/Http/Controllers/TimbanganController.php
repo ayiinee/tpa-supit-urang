@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Timbangan;
 use App\Models\Sampah;
 use App\Models\Truk;
+use App\Models\Setting;
+use App\Exports\TimbangansExport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -63,7 +65,8 @@ class TimbanganController extends Controller
             'timbangans' => $timbangans,
             'sampahs' => $sampah,
             'trucks' => $trucks,
-            'newTicketNumber' => $newTicketNumber
+            'newTicketNumber' => $newTicketNumber,
+            'cctvIp' => Setting::get('cctv_ip', ''),
         ]);
     }
 
@@ -210,13 +213,67 @@ class TimbanganController extends Controller
         ]);
     }
 
-    public function getAll()
+    public function getAll(Request $request)
     {
-        $timbangans = Timbangan::with(['sampah', 'truk'])
+        $perPage = $request->get('per_page', 10);
+        $page = $request->get('page', 1);
+        
+        $query = Timbangan::select([
+                'no_tiket',
+                'tanggal',
+                'no_polisi',
+                'no_lambung',
+                'nama_supir',
+                'id_sampah',
+                'berat_masuk',
+                'berat_keluar',
+                'netto',
+            ])
+            ->with([
+                'sampah:id,jenis_sampah',
+                'truk:no_polisi,nama_supir',
+            ])
             ->orderBy('tanggal', 'desc')
-            ->orderBy('no_tiket', 'desc')
-            ->get();
+            ->orderBy('no_tiket', 'desc');
 
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $day = $request->get('day');
+
+        if (!empty($year)) {
+            $startDate = Carbon::createFromDate((int) $year, 1, 1)->startOfDay();
+            $endDate = Carbon::createFromDate((int) $year, 12, 31)->endOfDay();
+
+            if (!empty($month)) {
+                $startDate = Carbon::createFromDate((int) $year, (int) $month, 1)->startOfDay();
+                $endDate = Carbon::createFromDate((int) $year, (int) $month, 1)->endOfMonth()->endOfDay();
+            }
+
+            if (!empty($day) && !empty($month)) {
+                $startDate = Carbon::createFromDate((int) $year, (int) $month, (int) $day)->startOfDay();
+                $endDate = Carbon::createFromDate((int) $year, (int) $month, (int) $day)->endOfDay();
+            }
+
+            $query->whereBetween('tanggal', [$startDate->toDateString(), $endDate->toDateString()]);
+        }
+            
+        // If pagination parameters are provided, use pagination
+        if ($request->has('page') || $request->has('per_page')) {
+            $timbangans = $query->paginate($perPage, ['*'], 'page', $page);
+            
+            return response()->json([
+                'data' => $timbangans->items(),
+                'total' => $timbangans->total(),
+                'per_page' => $timbangans->perPage(),
+                'current_page' => $timbangans->currentPage(),
+                'last_page' => $timbangans->lastPage(),
+                'from' => $timbangans->firstItem(),
+                'to' => $timbangans->lastItem(),
+            ]);
+        }
+        
+        // If no pagination parameters, return all data
+        $timbangans = $query->get();
         return response()->json($timbangans);
     }
 
@@ -249,10 +306,10 @@ class TimbanganController extends Controller
             'berat' => 'required|numeric',
         ]);
 
-        // Simpan ke cache supaya bisa dibaca oleh frontend
+        // OPTIMIZED: Reduced cache timeout for faster data expiration
         cache()->put('berat-terakhir', [
             'berat' => $validated['berat'],
-        ], now()->addSeconds(0.15)); // expired dalam 10 detik
+        ], now()->addMilliseconds(100)); // expired dalam 100ms
 
         return response()->json(['status' => 'berhasil simpan']);
     }
@@ -296,5 +353,50 @@ class TimbanganController extends Controller
         return response()->json([
             'total_netto_today' => round($totalBeratHariIni, 2),
         ]);
+    }
+
+    /**
+     * Print individual timbangan record
+     */
+    public function print($no_tiket)
+    {
+        $timbangan = Timbangan::with(['sampah', 'truk'])
+            ->where('no_tiket', $no_tiket)
+            ->firstOrFail();
+
+        return view('prints.receive-note', ['t' => $timbangan]);
+    }
+
+    /**
+     * Export all timbangan records to Excel
+     */
+    public function export(Request $request)
+    {
+        $exporter = new TimbangansExport();
+        $data = $exporter->export([
+            'year' => $request->query('year'),
+            'month' => $request->query('month'),
+            'day' => $request->query('day'),
+        ]);
+        
+        // Create CSV response since Excel package is not working properly
+        $filename = 'timbangan-' . date('Y-m-d') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        $callback = function() use ($data) {
+            $file = fopen('php://output', 'w');
+            
+            foreach ($data as $row) {
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }

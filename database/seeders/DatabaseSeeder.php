@@ -22,10 +22,9 @@ class DatabaseSeeder extends Seeder
         \App\Models\Sampah::truncate();
         User::truncate(); // <-- Gunakan model User
 
-        // Buat user langsung di sini, seperti kodemu sebelumnya
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'Admin',
+            'email' => 'admin@tpasupiturang.com',
         ]);
 
         // Panggil seeder lain yang memang ada filenya

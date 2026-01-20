@@ -64,6 +64,33 @@ class TrukController extends Controller
             return response()->json($this->getTrukData());
 
     }
+
+    public function search(Request $request)
+    {
+        $query = trim($request->get('query', ''));
+        $limit = (int) $request->get('limit', 50);
+        $limit = $limit > 0 ? $limit : 50;
+
+        $trucks = Truk::with('sampah')
+            ->when($query !== '', function ($builder) use ($query) {
+                $builder->where('no_polisi', 'like', '%' . $query . '%');
+            })
+            ->orderBy('no_polisi')
+            ->limit($limit)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'no_lambung' => $item->no_lambung,
+                    'no_polisi' => $item->no_polisi,
+                    'nama_supir' => $item->nama_supir,
+                    'barang' => $item->sampah ? [
+                        'jenis_sampah' => $item->sampah->jenis_sampah,
+                    ] : null,
+                ];
+            });
+
+        return response()->json(['trucks' => $trucks]);
+    }
     private function getTrukData()
 {
     $trucks = Truk::with(['supplier', 'sampah'])->orderBy('id', 'desc')->get()
@@ -91,4 +118,3 @@ class TrukController extends Controller
 }
 
 }
-
