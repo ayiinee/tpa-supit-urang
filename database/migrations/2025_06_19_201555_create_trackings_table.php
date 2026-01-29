@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('trackings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('truck_id')->constrained('trucks')->onDelete('cascade');
+            $table->foreignId('truck_id')->constrained('truk')->onDelete('cascade');
             $table->decimal('latitude', 10, 7);
             $table->decimal('longitude', 10, 7);
             $table->timestamp('created_at')->useCurrent();

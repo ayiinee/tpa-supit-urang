@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
-use App\Models\User; // <-- TAMBAHKAN INI
+use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,13 +22,9 @@ class DatabaseSeeder extends Seeder
         \App\Models\Sampah::truncate();
         User::truncate(); // <-- Gunakan model User
 
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@tpasupiturang.com',
-        ]);
-
         // Panggil seeder lain yang memang ada filenya
         $this->call([
+            UserSeeder::class,
             SampahSeeder::class,
             SupplierSeeder::class,
             TrukSeeder::class,
